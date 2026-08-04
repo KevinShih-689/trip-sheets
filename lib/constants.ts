@@ -1,3 +1,8 @@
+/** 換旅行時只需改這一段 + Sheets(SHEET_ID secret) */
+export const TRIP_TITLE = '大阪・六日';
+export const TRIP_EYEBROW = 'DEC 14 - 19 · 2026';
+export const SPLASH_WORLD = 'WORLD 12-14 · OSAKA';
+
 export const TRIP_YEAR = 2026;
 export const TRIP_MONTH = 12;
 export const TRIP_START_DAY = 14;

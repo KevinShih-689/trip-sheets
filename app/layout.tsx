@@ -3,6 +3,7 @@ import { IBM_Plex_Mono, Noto_Sans_TC, Press_Start_2P } from 'next/font/google';
 import type { ReactNode } from 'react';
 import { Providers } from './providers';
 import { BottomTabBar } from '@/components/BottomTabBar';
+import { TRIP_EYEBROW, TRIP_TITLE } from '@/lib/constants';
 import { Splash } from '@/components/Splash';
 import { SwRegister } from '@/components/SwRegister';
 import './globals.css';
@@ -29,8 +30,8 @@ const pressStart = Press_Start_2P({
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
 
 export const metadata: Metadata = {
-  title: '大阪・六日 | Japan Trip 2026',
-  description: '2026/12/14–12/19 大阪行程網站',
+  title: `${TRIP_TITLE} | Trip Sheets`,
+  description: `${TRIP_EYEBROW} 行程網站`,
   manifest: `${basePath}/manifest.json`,
   icons: { icon: `${basePath}/icons/icon-192.png`, apple: `${basePath}/icons/icon-192.png` },
 };

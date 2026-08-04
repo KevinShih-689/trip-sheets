@@ -3,7 +3,7 @@
 import { Box, Flex } from '@chakra-ui/react';
 import { useEffect, useMemo, useState } from 'react';
 import { Tag } from './Tag';
-import { TRIP_DATES } from '@/lib/constants';
+import { TRIP_DATES, TRIP_EYEBROW, TRIP_TITLE } from '@/lib/constants';
 import { dayCostSum, formatGeneratedAt, formatYen } from '@/lib/format';
 import type { TripDay } from '@/lib/types';
 
@@ -67,10 +67,10 @@ export function OverviewClient({ days, generatedAt }: Props): React.JSX.Element 
     <Box>
       <Box px="20px" pt="24px" pb="14px">
         <Box fontFamily="pixel" fontSize="8px" letterSpacing="0.06em" color="mario.faint">
-          DEC 14 - 19 · 2026
+          {TRIP_EYEBROW}
         </Box>
         <Box fontSize="24px" fontWeight="700" letterSpacing="0.02em" mt="10px">
-          大阪・六日
+          {TRIP_TITLE}
         </Box>
       </Box>
 

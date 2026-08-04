@@ -3,6 +3,7 @@
 import { Box, Flex } from '@chakra-ui/react';
 import { useEffect, useState } from 'react';
 import { QBlock } from './QBlock';
+import { SPLASH_WORLD } from '@/lib/constants';
 
 const SESSION_KEY = 'trip-splash-shown';
 const DURATION_MS = 1200;
@@ -57,7 +58,7 @@ export function Splash(): React.JSX.Element | null {
           <div className="splash-pfill load" />
         </div>
         <Box fontFamily="pixel" fontSize="8px" color="mario.faint" mt="18px">
-          WORLD 12-14 · OSAKA
+          {SPLASH_WORLD}
         </Box>
       </Flex>
       <div className="splash-ground run" />

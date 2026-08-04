@@ -1,0 +1,4 @@
+- Design google sheet
+- Base on final google sheet to develop static web (mobile) and publish on github
+  - no data 呈現
+  - 虛擬的初次載入動畫，雖然我們系統是吃靜態檔 但是否可以做一個虛擬的載入動畫來模擬請求
