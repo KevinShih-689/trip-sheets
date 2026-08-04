@@ -1,0 +1,18 @@
+# dependencies / build
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+# data:trip-data.json 由 CI 以 Sheets API 產生,不進版控(sample 除外)
+data/trip-data.json
+
+# secrets:任何 service account key 不得進版控
+*service-account*.json
+*sa-key*.json
+.env
+.env.*
+
+# misc
+.DS_Store
