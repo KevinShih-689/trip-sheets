@@ -1,0 +1,71 @@
+name: Deploy to GitHub Pages
+
+on:
+  workflow_dispatch: {}          # GitHub 手機 App 手動 rebuild(主要更新路徑)
+  schedule:
+    - cron: '0 21 * * *'         # 每日 UTC 21:00 = 台灣 05:00 自動兜底
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    env:
+      BASE_PATH: /${{ github.event.repository.name }}
+      NEXT_PUBLIC_GMAPS_EMBED_KEY: ${{ secrets.NEXT_PUBLIC_GMAPS_EMBED_KEY }}
+      NEXT_PUBLIC_SHEETS_URL: ${{ secrets.NEXT_PUBLIC_SHEETS_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Fetch sheet data
+        env:
+          GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+          SHEET_ID: ${{ secrets.SHEET_ID }}
+        run: pnpm fetch-sheet
+
+      - name: Lint & type-check
+        run: pnpm lint && pnpm type-check
+
+      - name: Build
+        run: pnpm build
+
+      - name: Sensitive-field guard (spec §3.2 / §8)
+        run: |
+          if grep -rE "訂位代號|PNR|訂單編號" out/ data/trip-data.json; then
+            echo "::error::敏感欄位出現在靜態產物,中止部署"
+            exit 1
+          fi
+          echo "sensitive-field guard passed"
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: out
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
