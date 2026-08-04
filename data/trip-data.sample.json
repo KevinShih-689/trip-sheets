@@ -1,0 +1,378 @@
+{
+  "generatedAt": "2026-08-04T06:00:00.000Z",
+  "days": [
+    {
+      "date": "2026-12-14",
+      "weekdayZh": "一",
+      "mainArea": "難波",
+      "accommodation": "難波民宿(待定)",
+      "highlight": "抵達日,行李先寄放再輕裝出門",
+      "items": [
+        {
+          "timeSlot": "10:00-12:00",
+          "category": "交通",
+          "name": "關西機場 → 難波",
+          "area": "大阪・難波",
+          "transport": "南海電鐵急行 約45分",
+          "openingHours": "-",
+          "estimatedCostJpy": 970,
+          "reservationStatus": "不需預約",
+          "link": "https://www.howto-osaka.com/",
+          "note": "買 ICOCA 或直接刷卡進站"
+        },
+        {
+          "timeSlot": "13:00",
+          "category": "餐廳",
+          "name": "一蘭拉麵 道頓堀",
+          "area": "道頓堀",
+          "transport": "步行 8 分",
+          "openingHours": "10:00-22:00",
+          "estimatedCostJpy": 1200,
+          "reservationStatus": "不需預約",
+          "link": null,
+          "note": "尖峰要排隊"
+        },
+        {
+          "timeSlot": "15:00-18:00",
+          "category": "景點",
+          "name": "道頓堀・心齋橋散策",
+          "area": "道頓堀",
+          "transport": "步行",
+          "openingHours": "-",
+          "estimatedCostJpy": 4000,
+          "reservationStatus": "不需預約",
+          "link": null,
+          "note": "固力果看板打卡"
+        }
+      ]
+    },
+    {
+      "date": "2026-12-15",
+      "weekdayZh": "二",
+      "mainArea": "環球影城",
+      "accommodation": "難波",
+      "highlight": "開園前 30 分抵達,入園先抽瑪利歐整理券",
+      "items": [
+        {
+          "timeSlot": "07:30",
+          "category": "餐廳",
+          "name": "早餐 · 便利商店",
+          "area": "難波",
+          "transport": "-",
+          "openingHours": "24h",
+          "estimatedCostJpy": 500,
+          "reservationStatus": "不需預約",
+          "link": null,
+          "note": ""
+        },
+        {
+          "timeSlot": "08:00",
+          "category": "交通",
+          "name": "難波 → 環球城站",
+          "area": "此花區",
+          "transport": "御堂筋線 → JR夢咲線 · 約35分",
+          "openingHours": "-",
+          "estimatedCostJpy": 290,
+          "reservationStatus": "不需預約",
+          "link": null,
+          "note": ""
+        },
+        {
+          "timeSlot": "09:00",
+          "category": "體驗/活動",
+          "name": "環球影城 入園",
+          "area": "此花區",
+          "transport": "已在園區內",
+          "openingHours": "09:00-21:00(12月冬季時間)",
+          "estimatedCostJpy": 8900,
+          "reservationStatus": "已預約",
+          "link": "https://www.usj.co.jp/",
+          "note": "門票已綁 App,入園直接刷 QR"
+        },
+        {
+          "timeSlot": "09:15",
+          "category": "體驗/活動",
+          "name": "瑪利歐園區 整理券",
+          "area": "園內",
+          "transport": "園內 App 抽選",
+          "openingHours": "-",
+          "estimatedCostJpy": null,
+          "reservationStatus": "待預約",
+          "link": null,
+          "note": "入園後第一件事"
+        },
+        {
+          "timeSlot": "12:30",
+          "category": "餐廳",
+          "name": "三根掃帚 午餐",
+          "area": "哈利波特園區",
+          "transport": "-",
+          "openingHours": "11:00-20:00",
+          "estimatedCostJpy": 3200,
+          "reservationStatus": "不需預約",
+          "link": null,
+          "note": ""
+        },
+        {
+          "timeSlot": "19:30",
+          "category": "餐廳",
+          "name": "Citywalk 晚餐 · 回難波",
+          "area": "此花區 → 難波",
+          "transport": "JR + 地鐵 約40分",
+          "openingHours": "-",
+          "estimatedCostJpy": 2800,
+          "reservationStatus": "不需預約",
+          "link": null,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "date": "2026-12-16",
+      "weekdayZh": "三",
+      "mainArea": "京都",
+      "accommodation": "難波",
+      "highlight": "清水寺一早人少,先去",
+      "items": [
+        {
+          "timeSlot": "08:00",
+          "category": "交通",
+          "name": "難波 → 京都",
+          "area": "京都",
+          "transport": "御堂筋線 → 阪急京都線 約60分",
+          "openingHours": "-",
+          "estimatedCostJpy": 470,
+          "reservationStatus": "不需預約",
+          "link": null,
+          "note": ""
+        },
+        {
+          "timeSlot": "09:30-11:30",
+          "category": "景點",
+          "name": "清水寺",
+          "area": "東山區",
+          "transport": "巴士 + 步行",
+          "openingHours": "06:00-18:00",
+          "estimatedCostJpy": 400,
+          "reservationStatus": "不需預約",
+          "link": null,
+          "note": "12 月可能有夜楓延長"
+        },
+        {
+          "timeSlot": "12:30",
+          "category": "餐廳",
+          "name": "祇園 午餐(待選)",
+          "area": "祇園",
+          "transport": "步行 15 分",
+          "openingHours": "-",
+          "estimatedCostJpy": 2500,
+          "reservationStatus": "待預約",
+          "link": null,
+          "note": "候補:壹錢洋食"
+        }
+      ]
+    },
+    {
+      "date": "2026-12-17",
+      "weekdayZh": "四",
+      "mainArea": "",
+      "accommodation": "難波",
+      "highlight": "",
+      "items": []
+    },
+    {
+      "date": "2026-12-18",
+      "weekdayZh": "五",
+      "mainArea": "梅田",
+      "accommodation": "難波",
+      "highlight": "購物日,行李箱留空間",
+      "items": [
+        {
+          "timeSlot": "10:30",
+          "category": "購物",
+          "name": "梅田 阪急百貨・Loft",
+          "area": "梅田",
+          "transport": "御堂筋線 約15分",
+          "openingHours": "10:00-20:00",
+          "estimatedCostJpy": 8000,
+          "reservationStatus": "不需預約",
+          "link": null,
+          "note": ""
+        },
+        {
+          "timeSlot": "17:00",
+          "category": "景點",
+          "name": "梅田藍天大廈 空中庭園",
+          "area": "梅田",
+          "transport": "步行 10 分",
+          "openingHours": "09:30-22:30",
+          "estimatedCostJpy": 2000,
+          "reservationStatus": "不需預約",
+          "link": null,
+          "note": "看夕陽時段最佳"
+        }
+      ]
+    },
+    {
+      "date": "2026-12-19",
+      "weekdayZh": "六",
+      "mainArea": "臨空城 → KIX",
+      "accommodation": "-",
+      "highlight": "回程日,14:30 前抵達機場",
+      "items": [
+        {
+          "timeSlot": "10:00-13:00",
+          "category": "購物",
+          "name": "臨空城 Outlet",
+          "area": "臨空城",
+          "transport": "南海本線 約40分",
+          "openingHours": "10:00-20:00",
+          "estimatedCostJpy": 3000,
+          "reservationStatus": "不需預約",
+          "link": null,
+          "note": "行李可寄機場置物櫃"
+        },
+        {
+          "timeSlot": "14:30",
+          "category": "交通",
+          "name": "臨空城 → 關西機場",
+          "area": "KIX",
+          "transport": "南海本線 1 站",
+          "openingHours": "-",
+          "estimatedCostJpy": 380,
+          "reservationStatus": "不需預約",
+          "link": null,
+          "note": "17:45 起飛,15:45 前過安檢"
+        }
+      ]
+    }
+  ],
+  "backlog": {
+    "flights": [
+      {
+        "direction": "去程",
+        "date": "2026/12/14",
+        "airline": "長榮航空",
+        "flightNo": "BR 132",
+        "from": "TPE",
+        "departTime": "08:30",
+        "to": "KIX",
+        "arriveTime": "12:00",
+        "terminal": "T2 / T1",
+        "priceTwd": 12500,
+        "baggage": "23kg ×1 · 手提 7kg",
+        "note": ""
+      },
+      {
+        "direction": "回程",
+        "date": "2026/12/19",
+        "airline": "長榮航空",
+        "flightNo": "BR 177",
+        "from": "KIX",
+        "departTime": "17:45",
+        "to": "TPE",
+        "arriveTime": "20:05",
+        "terminal": "T1 / T2",
+        "priceTwd": 12500,
+        "baggage": "23kg ×1 · 手提 7kg",
+        "note": ""
+      }
+    ],
+    "rooms": [
+      {
+        "name": "難波 光之宿",
+        "area": "難波",
+        "checkIn": "2026/12/14",
+        "checkOut": "2026/12/19",
+        "nights": 5,
+        "roomType": "雙人房 · 2 人",
+        "totalPrice": "¥62,000",
+        "platform": "Booking.com",
+        "paymentStatus": "已付全額",
+        "freeCancelDeadline": "2026/12/07",
+        "addressOrLink": "大阪市中央区難波 3-x-x",
+        "note": ""
+      }
+    ],
+    "usj": [
+      {
+        "item": "門票 (Studio Pass)",
+        "useDate": "2026/12/15",
+        "ticketName": "1日券",
+        "quantity": 2,
+        "unitPrice": 8900,
+        "totalPrice": 17800,
+        "platform": "Klook",
+        "purchaseStatus": "已購買",
+        "redemption": "App QR 直接入園",
+        "note": ""
+      },
+      {
+        "item": "快速通關 (Express Pass)",
+        "useDate": "2026/12/15",
+        "ticketName": "Express 4",
+        "quantity": 2,
+        "unitPrice": null,
+        "totalPrice": null,
+        "platform": "",
+        "purchaseStatus": "比價中",
+        "redemption": "",
+        "note": "琪琪阿琪琪 + 瑪利歐賽車"
+      },
+      {
+        "item": "早鳥入場券",
+        "useDate": "2026/12/15",
+        "ticketName": "",
+        "quantity": null,
+        "unitPrice": null,
+        "totalPrice": null,
+        "platform": "",
+        "purchaseStatus": "未購買",
+        "redemption": "",
+        "note": "視 Express 是否購買再決定"
+      },
+      {
+        "item": "App 抽選 / 整理券",
+        "useDate": "2026/12/15",
+        "ticketName": "瑪利歐園區整理券",
+        "quantity": null,
+        "unitPrice": null,
+        "totalPrice": null,
+        "platform": "USJ App",
+        "purchaseStatus": "當日抽",
+        "redemption": "入園後第一件事",
+        "note": ""
+      }
+    ],
+    "bnbCandidates": [
+      {
+        "name": "道頓堀 川畔之家",
+        "areaStation": "難波站",
+        "walkToStation": "步行 6 分",
+        "roomType": "整層 · 4 人",
+        "pricePerNight": "¥14,000",
+        "totalPriceEst": "¥70,000",
+        "rating": "9.2",
+        "pros": "河景 · 有洗衣機",
+        "cons": "週末價格浮動大",
+        "link": null,
+        "status": "比較中",
+        "note": ""
+      },
+      {
+        "name": "日本橋 町屋改建",
+        "areaStation": "日本橋站",
+        "walkToStation": "步行 3 分",
+        "roomType": "町屋 · 3 人",
+        "pricePerNight": "¥11,500",
+        "totalPriceEst": "¥57,500",
+        "rating": "8.8",
+        "pros": "町屋氛圍 · 價格低",
+        "cons": "浴室較小 · 無電梯",
+        "link": null,
+        "status": "候選",
+        "note": ""
+      }
+    ]
+  }
+}
