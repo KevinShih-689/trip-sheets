@@ -104,7 +104,6 @@ export function OverviewClient({ days, generatedAt }: Props): React.JSX.Element 
                   cursor="pointer"
                   bg={focused ? 'rgba(251,208,0,0.07)' : 'transparent'}
                   onClick={() => setFocusDate(day.date)}
-                  onMouseEnter={() => setFocusDate(day.date)}
                 >
                   <Box w="42px" flexShrink={0}>
                     <Box fontFamily="mono" fontSize="24px" lineHeight="1" fontWeight="500" color={focused ? 'mario.yellow' : 'mario.dim'}>
