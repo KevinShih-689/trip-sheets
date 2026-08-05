@@ -412,7 +412,7 @@ japan-trip-2026/
 - [x] `aaa.xlsx` 上傳 Google Drive → 另存為 Google 試算表,確認 7 個 tab、下拉選單正常
 - [x] GCP:建專案 → 啟用 Sheets API → 建 service account + JSON key(§3.3)
 - [x] 試算表共用給 SA email(檢視者)
-- [ ] GitHub 建 repo,設定兩個 Secrets、Pages Source = GitHub Actions
+- [x] GitHub 建 repo,設定兩個 Secrets、Pages Source = GitHub Actions
 - ✅ **驗收**:本機 `curl` 或臨時 script 以 SA 憑證讀取 sheet 成功回傳資料
 
 ### Phase 1 — fetch script

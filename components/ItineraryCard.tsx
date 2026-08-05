@@ -6,7 +6,7 @@ import { Tag, statusVariant } from './Tag';
 import { formatYen } from '@/lib/format';
 import type { ItineraryItem } from '@/lib/types';
 
-/** 行程列:預設收合,點擊展開詳細(spec §4.3) */
+/** 行程列:mobile 點擊展開;desktop(≥1024)詳細常駐展開(CSS .icard-detail 控制) */
 export function ItineraryCard({ item }: { item: ItineraryItem }): React.JSX.Element {
   const [open, setOpen] = useState(false);
   const needsAttention = item.reservationStatus === '待預約' || item.reservationStatus === '候補中';
@@ -45,46 +45,55 @@ export function ItineraryCard({ item }: { item: ItineraryItem }): React.JSX.Elem
             {formatYen(item.estimatedCostJpy)}
           </Box>
         ) : (
-          <Box fontSize="16px" lineHeight="1" color="mario.faint" alignSelf="center">
+          <Box className="only-mobile" fontSize="16px" lineHeight="1" color="mario.faint" alignSelf="center">
             {open ? '−' : '+'}
           </Box>
         )}
       </Flex>
 
-      {open && (
-        <Box bg="mario.surface" borderWidth="1px" borderColor="mario.line" borderRadius="10px" mx="16px" mb="10px" mt="-4px" px="16px" py="14px">
-          <DetailRow label="交通">{item.transport || '-'}</DetailRow>
-          <DetailRow label="營業">{item.openingHours || '-'}</DetailRow>
-          <DetailRow label="費用">
-            {item.estimatedCostJpy !== null ? (
-              <Box as="span" fontFamily="mono" color="mario.yellow">
-                {formatYen(item.estimatedCostJpy)}
-              </Box>
-            ) : (
-              '-'
-            )}
-          </DetailRow>
-          <DetailRow label="預約">
-            {item.reservationStatus ? <Tag variant={statusVariant(item.reservationStatus)}>{item.reservationStatus}</Tag> : '-'}
-          </DetailRow>
-          {item.note && (
-            <DetailRow label="備註">
-              <Box as="span" color="mario.dim">
-                {item.note}
-              </Box>
-            </DetailRow>
+      <Box
+        className={open ? 'icard-detail open' : 'icard-detail'}
+        bg="mario.surface"
+        borderWidth="1px"
+        borderColor="mario.line"
+        borderRadius="10px"
+        mx="16px"
+        mb="10px"
+        mt="-4px"
+        px="16px"
+        py="14px"
+      >
+        <DetailRow label="交通">{item.transport || '-'}</DetailRow>
+        <DetailRow label="營業">{item.openingHours || '-'}</DetailRow>
+        <DetailRow label="費用">
+          {item.estimatedCostJpy !== null ? (
+            <Box as="span" fontFamily="mono" color="mario.yellow">
+              {formatYen(item.estimatedCostJpy)}
+            </Box>
+          ) : (
+            '-'
           )}
-          <DetailRow label="地圖">
-            <a
-              href={item.link ?? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${item.name} ${item.area}`)}`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              Google Maps ↗
-            </a>
+        </DetailRow>
+        <DetailRow label="預約">
+          {item.reservationStatus ? <Tag variant={statusVariant(item.reservationStatus)}>{item.reservationStatus}</Tag> : '-'}
+        </DetailRow>
+        {item.note && (
+          <DetailRow label="備註">
+            <Box as="span" color="mario.dim">
+              {item.note}
+            </Box>
           </DetailRow>
-        </Box>
-      )}
+        )}
+        <DetailRow label="地圖">
+          <a
+            href={item.link ?? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${item.name} ${item.area}`)}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Google Maps ↗
+          </a>
+        </DetailRow>
+      </Box>
     </Box>
   );
 }

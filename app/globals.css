@@ -183,3 +183,82 @@ a:hover {
   background: var(--red);
   transform: rotate(-45deg);
 }
+
+/* ══════════ RWD:≥1024px 桌面 shell(Trip UI v4 Desktop 定稿)══════════ */
+
+.app-main {
+  max-width: 430px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  background: var(--bg);
+  padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
+}
+.side-nav { display: none; }
+
+/* 斷點工具類:只負責隱藏,不強制 display 型別(否則會蓋掉 flex/grid) */
+@media (max-width: 1023.98px) {
+  .only-desktop { display: none !important; }
+}
+
+/* 小尺寸問號方塊(區塊級空狀態) */
+.qblock.sm { width: 44px; height: 44px; border-width: 2px; border-radius: 8px;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.35), inset -3px -3px 0 rgba(0,0,0,0.18), inset 3px 3px 0 rgba(255,255,255,0.28); }
+.qblock.sm .qm { font-size: 18px; }
+.qblock.sm .rivet { width: 4px; height: 4px; }
+.qblock.sm .rivet.tl { left: 4px; top: 4px; }
+.qblock.sm .rivet.tr { right: 4px; top: 4px; }
+.qblock.sm .rivet.bl { left: 4px; bottom: 4px; }
+.qblock.sm .rivet.br { right: 4px; bottom: 4px; }
+
+.ov-list { border-top: 1px solid var(--line); }
+
+/* 行程卡片:mobile 點擊展開;desktop 常駐展開 */
+.icard-detail { display: none; }
+.icard-detail.open { display: block; }
+
+@media (min-width: 1024px) {
+  .only-mobile { display: none !important; }
+
+  .app-shell { display: flex; }
+  .app-main { max-width: none; flex: 1; padding-bottom: 0; }
+
+  /* 左側導覽欄 */
+  .side-nav { display: flex; flex-direction: column; width: 216px; flex: none;
+    background: #0d0f17; border-right: 1px solid var(--line);
+    position: sticky; top: 0; height: 100dvh; }
+  .side-nav .brand { padding: 26px 20px 20px; }
+  .side-nav .snav { flex: 1; padding: 6px 10px; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
+  .sitem { display: flex; align-items: center; gap: 12px; padding: 10px 12px;
+    border-radius: 8px; color: var(--faint); border-left: 2px solid transparent; font-size: 13px; font-weight: 500; }
+  .sitem .snum { font-family: var(--font-plex), monospace; font-weight: 500; font-size: 15px; width: 22px; }
+  .sitem .sarea { font-size: 12px; color: var(--faint); }
+  .sitem:hover { background: rgba(235, 240, 255, 0.04); color: var(--dim); }
+  .sitem.on { background: rgba(251, 208, 0, 0.08); color: var(--yellow); border-left-color: var(--yellow); }
+  .sitem.on .sarea { color: rgba(251, 208, 0, 0.75); }
+  .side-nav .sfoot { padding: 14px 20px; border-top: 1px solid var(--line); }
+  .bottom-nav { display: none !important; }
+
+  /* 桌面內容區共用 */
+  .mbody-pad { padding: 0 28px 24px; }
+  .panel-desktop { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; align-self: start; }
+
+  /* 總覽:list + 大地圖 */
+  .ov-body { display: grid; grid-template-columns: 440px 1fr; gap: 20px; padding: 0 28px 24px; }
+  .ov-list { order: -1; border-top: none; }
+  .ov-map { margin: 0 !important; height: auto !important; min-height: 560px; }
+
+  /* 每日:timeline + 右側摘要欄 */
+  .day-grid { display: grid; grid-template-columns: 1fr 300px; gap: 20px; padding: 0 28px 24px; align-items: start; }
+  .day-rail { display: flex; flex-direction: column; gap: 16px; }
+  .icard-detail { display: block; }
+
+  /* 行前:機票|USJ 兩欄,住宿/民宿整寬水平擴展 */
+  .bl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px; padding: 0 28px 24px;
+    grid-template-areas: 'flights usj' 'stay stay' 'bnb bnb'; align-items: start; }
+  .bl-flights { grid-area: flights; }
+  .bl-usj { grid-area: usj; }
+  .bl-stay { grid-area: stay; }
+  .bl-bnb { grid-area: bnb; }
+  .cards-h { display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px; align-items: start; }
+  .bl-grid .sec-title { padding-left: 16px; padding-right: 16px; }
+}

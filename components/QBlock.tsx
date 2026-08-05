@@ -1,6 +1,12 @@
-export function QBlock({ idle = true }: { idle?: boolean }): React.JSX.Element {
+interface Props {
+  idle?: boolean;
+  size?: 'md' | 'sm';
+}
+
+export function QBlock({ idle = true, size = 'md' }: Props): React.JSX.Element {
+  const cls = ['qblock', idle ? 'idle' : '', size === 'sm' ? 'sm' : ''].filter(Boolean).join(' ');
   return (
-    <div className={idle ? 'qblock idle' : 'qblock'}>
+    <div className={cls}>
       <span className="qm">?</span>
       <span className="rivet tl" />
       <span className="rivet tr" />

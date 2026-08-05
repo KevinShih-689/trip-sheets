@@ -1,11 +1,12 @@
 import { Box, Flex } from '@chakra-ui/react';
 import { BnbCard, BoardingPass, HotelCard, TicketRow } from '@/components/backlog-cards';
 import { EmptyState } from '@/components/EmptyState';
+import { QBlock } from '@/components/QBlock';
 import { getTripData } from '@/lib/trip-data';
 
 function SectionTitle({ zh, en }: { zh: string; en: string }): React.JSX.Element {
   return (
-    <Flex px="20px" pt="20px" pb="8px" align="baseline" gap="10px">
+    <Flex className="sec-title" px="20px" pt="20px" pb="8px" align="baseline" gap="10px">
       <Box fontSize="13px" fontWeight="700" letterSpacing="0.06em">
         {zh}
       </Box>
@@ -16,16 +17,20 @@ function SectionTitle({ zh, en }: { zh: string; en: string }): React.JSX.Element
   );
 }
 
+/** 區塊級空狀態:同一套問號方塊元件的小尺寸版(D3 定稿) */
 function SectionEmpty({ text }: { text: string }): React.JSX.Element {
   return (
-    <Box mx="16px" my="8px" px="16px" py="18px" borderWidth="1px" borderColor="mario.line" borderRadius="10px" textAlign="center">
-      <Box fontFamily="pixel" fontSize="8px" color="mario.faint">
-        NO DATA
+    <Flex mx="16px" my="8px" px="16px" py="16px" borderWidth="1px" borderColor="mario.line" borderRadius="10px" align="center" gap="16px">
+      <QBlock size="sm" idle={false} />
+      <Box>
+        <Box fontFamily="pixel" fontSize="7px" color="mario.yellow">
+          NO DATA
+        </Box>
+        <Box fontSize="12px" color="mario.dim" mt="6px">
+          {text}
+        </Box>
       </Box>
-      <Box fontSize="12px" color="mario.dim" mt="8px">
-        {text}
-      </Box>
-    </Box>
+    </Flex>
   );
 }
 
@@ -37,17 +42,21 @@ export default function BacklogPage(): React.JSX.Element {
     backlog.usj.length === 0 &&
     backlog.bnbCandidates.length === 0;
 
+  const header = (
+    <Box px={{ base: '20px', lg: '28px' }} pt="24px" pb="4px">
+      <Box fontFamily="pixel" fontSize="8px" color="mario.faint">
+        PRE-TRIP
+      </Box>
+      <Box fontSize="22px" fontWeight="700" mt="8px">
+        行前資訊
+      </Box>
+    </Box>
+  );
+
   if (allEmpty) {
     return (
       <Flex direction="column" minH="calc(100dvh - var(--tabbar-h))">
-        <Box px="20px" pt="24px" pb="4px">
-          <Box fontFamily="pixel" fontSize="8px" color="mario.faint">
-            PRE-TRIP
-          </Box>
-          <Box fontSize="22px" fontWeight="700" mt="8px">
-            行前資訊
-          </Box>
-        </Box>
+        {header}
         <EmptyState title="還沒有行前資料" hint="到 Google Sheets 的「Backlog」tab 填入機票/住宿資訊後重新部署" />
       </Flex>
     );
@@ -55,42 +64,52 @@ export default function BacklogPage(): React.JSX.Element {
 
   return (
     <Box pb="20px">
-      <Box px="20px" pt="24px" pb="4px">
-        <Box fontFamily="pixel" fontSize="8px" color="mario.faint">
-          PRE-TRIP
-        </Box>
-        <Box fontSize="22px" fontWeight="700" mt="8px">
-          行前資訊
-        </Box>
-      </Box>
+      {header}
+      <div className="bl-grid">
+        <section className="bl-flights">
+          <SectionTitle zh="機票" en="BOARDING" />
+          {backlog.flights.length > 0 ? (
+            backlog.flights.map((f) => <BoardingPass key={`${f.flightNo}-${f.date}`} flight={f} />)
+          ) : (
+            <SectionEmpty text="尚未填入機票資訊" />
+          )}
+        </section>
 
-      <SectionTitle zh="機票" en="BOARDING" />
-      {backlog.flights.length > 0 ? (
-        backlog.flights.map((f) => <BoardingPass key={`${f.flightNo}-${f.date}`} flight={f} />)
-      ) : (
-        <SectionEmpty text="尚未填入機票資訊" />
-      )}
+        <section className="bl-stay">
+          <SectionTitle zh="住宿" en="STAY" />
+          {backlog.rooms.length > 0 ? (
+            <div className="cards-h">
+              {backlog.rooms.map((r) => (
+                <HotelCard key={`${r.name}-${r.checkIn}`} room={r} />
+              ))}
+            </div>
+          ) : (
+            <SectionEmpty text="尚未填入已訂住宿" />
+          )}
+        </section>
 
-      <SectionTitle zh="住宿" en="STAY" />
-      {backlog.rooms.length > 0 ? (
-        backlog.rooms.map((r) => <HotelCard key={`${r.name}-${r.checkIn}`} room={r} />)
-      ) : (
-        <SectionEmpty text="尚未填入已訂住宿" />
-      )}
+        <section className="bl-usj">
+          <SectionTitle zh="環球影城" en="USJ" />
+          {backlog.usj.length > 0 ? (
+            backlog.usj.map((t) => <TicketRow key={t.item} ticket={t} />)
+          ) : (
+            <SectionEmpty text="尚未填入環球影城項目" />
+          )}
+        </section>
 
-      <SectionTitle zh="環球影城" en="USJ" />
-      {backlog.usj.length > 0 ? (
-        backlog.usj.map((t) => <TicketRow key={t.item} ticket={t} />)
-      ) : (
-        <SectionEmpty text="尚未填入環球影城項目" />
-      )}
-
-      <SectionTitle zh="民宿口袋名單" en="SHORTLIST" />
-      {backlog.bnbCandidates.length > 0 ? (
-        backlog.bnbCandidates.map((b) => <BnbCard key={b.name} bnb={b} />)
-      ) : (
-        <SectionEmpty text="尚未加入民宿候選" />
-      )}
+        <section className="bl-bnb">
+          <SectionTitle zh="民宿口袋名單" en="SHORTLIST" />
+          {backlog.bnbCandidates.length > 0 ? (
+            <div className="cards-h">
+              {backlog.bnbCandidates.map((b) => (
+                <BnbCard key={b.name} bnb={b} />
+              ))}
+            </div>
+          ) : (
+            <SectionEmpty text="尚未加入民宿候選" />
+          )}
+        </section>
+      </div>
     </Box>
   );
 }
