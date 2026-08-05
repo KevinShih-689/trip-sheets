@@ -129,7 +129,7 @@ function DayRail({
   );
   return (
     <aside className="day-rail only-desktop">
-      <Box className="panel-desktop w-full" p="16px">
+      <Box className="panel-desktop" w="full" p="16px">
         <Box fontFamily="pixel" fontSize="7px" color="mario.faint">
           DAY SUMMARY
         </Box>
