@@ -322,7 +322,17 @@ export default nextConfig;
 - 字體:Noto Sans TC(內文)+ IBM Plex Mono(時刻、金額、代碼)+ **Press Start 2P**(僅限英文小標:eyebrow、星期、CHECK-IN/OUT、區段代號——8 bit 像素字型是瑪利歐主題的點題元素,限縮用量避免影響可讀性)
 - 類型化卡片:機票 = 登機證樣式(色帶 + 虛線撕線 + 條碼)、住宿 = check-in/out 雙欄卡、USJ = 票根樣式列(虛線分隔 + 狀態 stub)、民宿 = 含 +/− 優缺點的比較卡
 
-### 4.5 PWA
+### 4.5 RWD 桌面版(Claude Design Trip UI v4 Desktop 定稿)
+
+- **單一斷點 `1024px`**;以下為 mobile 定稿(不動),以上切換桌面 shell。全部以 CSS media query 切換,無 JS 斷點邏輯
+- **導覽**:`AppNav` 同時渲染底部 tab bar(mobile)與左側 sidebar(desktop),CSS 控制顯隱;sidebar 每個日期附當日區域、底部常駐「資料更新於 + Σ 總花費」
+- **總覽**:左 440px 日期列表 + 右側大地圖(min 560px);hover/點擊日期列地圖跟隨
+- **每日**:timeline 詳細**常駐展開**(`.icard-detail` CSS 控制,mobile 仍為點擊展開)+ 右側 300px 摘要欄(DAY SUMMARY / TODO=`待預約·候補中`自動聚合+B4 重點 / 迷你地圖)
+- **行前**:grid areas `flights|usj / stay / bnb`——住宿與民宿多筆時水平擴展,民宿緊貼住宿下方;區塊空狀態用小尺寸問號方塊(`QBlock size="sm"`)
+- **狀態畫面**:Splash 為全視窗 overlay 不隨斷點改變;EmptyState 置中於內容區(sidebar 保留)
+- ⚠️ 實作紀律:斷點工具類 `.only-mobile`/`.only-desktop` **只負責隱藏**(反向 media query 各自 hide),不得強制 `display` 型別,否則會蓋掉元素自身的 flex/grid
+
+### 4.6 PWA
 
 - `manifest.json`(name/icons/`display: standalone`/`start_url` 含 basePath)
 - Service worker:precache 全部頁面與 assets(資料已內嵌於頁面,無額外 runtime 請求需快取);策略 stale-while-revalidate,新部署後下次開啟自動更新
