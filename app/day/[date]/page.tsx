@@ -155,7 +155,7 @@ function DayRail({
       </Box>
 
       {(todos.length > 0 || day.highlight) && (
-        <Box className="panel-desktop" p="16px">
+        <Box className="panel-desktop" w="full" p="16px">
           <Box fontFamily="pixel" fontSize="7px" color="mario.redT">
             TODO
           </Box>
