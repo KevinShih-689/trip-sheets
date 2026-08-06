@@ -43,7 +43,7 @@ export default async function DayPage({
           <Box fontFamily="mono" fontSize="28px" fontWeight="600">
             {shortDate(day.date)}
           </Box>
-          <Box fontFamily="pixel" fontSize="8px" color="mario.faint">
+          <Box fontFamily="pixel" fontSize="8px" color="pixel.faint">
             {WEEKDAY_EN[day.weekdayZh] ?? ""} · DAY {dayIndex}
           </Box>
         </Flex>
@@ -55,7 +55,7 @@ export default async function DayPage({
           <Box
             className="only-mobile"
             fontSize="12px"
-            color="mario.dim"
+            color="pixel.dim"
             mt="10px"
           >
             重點:{day.highlight}
@@ -65,7 +65,7 @@ export default async function DayPage({
       <Box
         className="only-mobile"
         borderTopWidth="1px"
-        borderColor="mario.line"
+        borderColor="pixel.line"
       />
 
       {day.items.length === 0 ? (
@@ -81,7 +81,7 @@ export default async function DayPage({
                 {i > 0 && (
                   <Box
                     borderTopWidth="1px"
-                    borderColor="mario.line"
+                    borderColor="pixel.line"
                     mx="20px"
                   />
                 )}
@@ -90,20 +90,20 @@ export default async function DayPage({
             ))}
             <Flex
               borderTopWidth="1px"
-              borderColor="mario.line"
+              borderColor="pixel.line"
               px="20px"
               py="13px"
               justify="space-between"
               align="baseline"
             >
-              <Box fontSize="12px" color="mario.dim">
+              <Box fontSize="12px" color="pixel.dim">
                 當日預估花費
               </Box>
               <Box
                 fontFamily="mono"
                 fontSize="16px"
                 fontWeight="600"
-                color="mario.yellow"
+                color="pixel.yellow"
               >
                 {formatYen(subtotal)}
               </Box>
@@ -130,7 +130,7 @@ function DayRail({
   return (
     <aside className="day-rail only-desktop">
       <Box className="panel-desktop" w="full" p="16px">
-        <Box fontFamily="pixel" fontSize="7px" color="mario.faint">
+        <Box fontFamily="pixel" fontSize="7px" color="pixel.faint">
           DAY SUMMARY
         </Box>
         <RailKv k="區域">{day.mainArea || "未定"}</RailKv>
@@ -140,14 +140,14 @@ function DayRail({
             {day.items.length}
           </Box>
         </RailKv>
-        <Box borderTopWidth="1px" borderColor="mario.line" my="10px" />
+        <Box borderTopWidth="1px" borderColor="pixel.line" my="10px" />
         <RailKv k="預估花費">
           <Box
             as="span"
             fontFamily="mono"
             fontSize="15px"
             fontWeight="600"
-            color="mario.yellow"
+            color="pixel.yellow"
           >
             {formatYen(subtotal)}
           </Box>
@@ -156,7 +156,7 @@ function DayRail({
 
       {(todos.length > 0 || day.highlight) && (
         <Box className="panel-desktop" w="full" p="16px">
-          <Box fontFamily="pixel" fontSize="7px" color="mario.redT">
+          <Box fontFamily="pixel" fontSize="7px" color="pixel.redT">
             TODO
           </Box>
           {todos.map((t) => (
@@ -173,7 +173,7 @@ function DayRail({
             </Flex>
           ))}
           {day.highlight && (
-            <Box fontSize="11.5px" color="mario.faint" mt="8px">
+            <Box fontSize="11.5px" color="pixel.faint" mt="8px">
               重點:{day.highlight}
             </Box>
           )}
@@ -196,7 +196,7 @@ function RailKv({
 }): React.JSX.Element {
   return (
     <Flex justify="space-between" gap="12px" fontSize="12.5px" pt="10px">
-      <Box color="mario.faint" flexShrink={0}>
+      <Box color="pixel.faint" flexShrink={0}>
         {k}
       </Box>
       <Box textAlign="right">{children}</Box>

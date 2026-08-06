@@ -51,7 +51,7 @@
       "weekdayZh": "二",
       "mainArea": "環球影城",
       "accommodation": "難波",
-      "highlight": "開園前 30 分抵達,入園先抽瑪利歐整理券",
+      "highlight": "開園前 30 分抵達,入園先抽主題園區整理券",
       "items": [
         {
           "timeSlot": "07:30",
@@ -92,7 +92,7 @@
         {
           "timeSlot": "09:15",
           "category": "體驗/活動",
-          "name": "瑪利歐園區 整理券",
+          "name": "主題園區 整理券",
           "area": "園內",
           "transport": "園內 App 抽選",
           "openingHours": "-",
@@ -317,7 +317,7 @@
         "platform": "",
         "purchaseStatus": "比價中",
         "redemption": "",
-        "note": "琪琪阿琪琪 + 瑪利歐賽車"
+        "note": "熱門設施 + 主題園區賽車"
       },
       {
         "item": "早鳥入場券",
@@ -334,7 +334,7 @@
       {
         "item": "App 抽選 / 整理券",
         "useDate": "2026/12/15",
-        "ticketName": "瑪利歐園區整理券",
+        "ticketName": "主題園區整理券",
         "quantity": null,
         "unitPrice": null,
         "totalPrice": null,

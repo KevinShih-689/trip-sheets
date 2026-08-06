@@ -48,7 +48,7 @@ export function OverviewClient({ days, generatedAt }: Props): React.JSX.Element 
     <Box>
       {/* Mobile header(定稿不動) */}
       <Box className="only-mobile" px="20px" pt="24px" pb="14px">
-        <Box fontFamily="pixel" fontSize="8px" letterSpacing="0.06em" color="mario.faint">
+        <Box fontFamily="pixel" fontSize="8px" letterSpacing="0.06em" color="pixel.faint">
           {TRIP_EYEBROW}
         </Box>
         <Box fontSize="24px" fontWeight="700" letterSpacing="0.02em" mt="10px">
@@ -75,7 +75,7 @@ export function OverviewClient({ days, generatedAt }: Props): React.JSX.Element 
           h="148px"
           borderRadius="12px"
           borderWidth="1px"
-          borderColor="mario.line"
+          borderColor="pixel.line"
           overflow="hidden"
         >
           <MapEmbed area={focusDay?.mainArea ?? ''} />
@@ -91,7 +91,7 @@ export function OverviewClient({ days, generatedAt }: Props): React.JSX.Element 
             const dayNum = String(Number(day.date.slice(8)));
             return (
               <Box key={day.date}>
-                {idx > 0 && <Box borderTopWidth="1px" borderColor="mario.line" mx="20px" />}
+                {idx > 0 && <Box borderTopWidth="1px" borderColor="pixel.line" mx="20px" />}
                 <Flex
                   as="button"
                   w="100%"
@@ -106,10 +106,10 @@ export function OverviewClient({ days, generatedAt }: Props): React.JSX.Element 
                   onClick={() => setFocusDate(day.date)}
                 >
                   <Box w="42px" flexShrink={0}>
-                    <Box fontFamily="mono" fontSize="24px" lineHeight="1" fontWeight="500" color={focused ? 'mario.yellow' : 'mario.dim'}>
+                    <Box fontFamily="mono" fontSize="24px" lineHeight="1" fontWeight="500" color={focused ? 'pixel.yellow' : 'pixel.dim'}>
                       {dayNum}
                     </Box>
-                    <Box fontFamily="pixel" fontSize="7px" mt="4px" color={focused ? 'mario.yellow' : 'mario.faint'} opacity={focused ? 0.8 : 1}>
+                    <Box fontFamily="pixel" fontSize="7px" mt="4px" color={focused ? 'pixel.yellow' : 'pixel.faint'} opacity={focused ? 0.8 : 1}>
                       {WEEKDAY_EN[day.weekdayZh] ?? ''}
                     </Box>
                   </Box>
@@ -117,11 +117,11 @@ export function OverviewClient({ days, generatedAt }: Props): React.JSX.Element 
                     <Box fontSize="14px" fontWeight="500">
                       {day.mainArea || '(未定)'}
                     </Box>
-                    <Box fontSize="11.5px" color="mario.faint" mt="3px">
+                    <Box fontSize="11.5px" color="pixel.faint" mt="3px">
                       {day.accommodation ? `宿:${day.accommodation}` : `${day.items.length} 筆行程`}
                     </Box>
                   </Box>
-                  <Box fontFamily="mono" fontSize="13px" fontWeight="500" color={focused ? 'mario.yellow' : 'mario.dim'}>
+                  <Box fontFamily="mono" fontSize="13px" fontWeight="500" color={focused ? 'pixel.yellow' : 'pixel.dim'}>
                     {formatYen(cost)}
                   </Box>
                 </Flex>
@@ -132,11 +132,11 @@ export function OverviewClient({ days, generatedAt }: Props): React.JSX.Element 
       </div>
 
       {/* Mobile footer(desktop 由 sidebar sfoot 呈現) */}
-      <Flex className="only-mobile" borderTopWidth="1px" borderColor="mario.line" px="20px" py="12px" justify="space-between" align="baseline">
-        <Box fontSize="11px" color="mario.faint">
+      <Flex className="only-mobile" borderTopWidth="1px" borderColor="pixel.line" px="20px" py="12px" justify="space-between" align="baseline">
+        <Box fontSize="11px" color="pixel.faint">
           資料更新於 {formatGeneratedAt(generatedAt)}
         </Box>
-        <Box fontFamily="mono" fontSize="13px" fontWeight="500" color="mario.yellow">
+        <Box fontFamily="mono" fontSize="13px" fontWeight="500" color="pixel.yellow">
           Σ {formatYen(totalCost)}
         </Box>
       </Flex>
