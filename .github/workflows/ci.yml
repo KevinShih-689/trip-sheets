@@ -1,0 +1,57 @@
+name: CI
+
+# Validation gate for pull requests and non-main branches.
+# Runs WITHOUT any secrets — it uses the committed sample dataset
+# (data/trip-data.sample.json) so PRs from forks can be checked safely.
+# Deployment (with real Sheets data + secrets) lives in deploy.yml and only
+# runs on main / dispatch / cron.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches-ignore: [main]
+
+# Cancel superseded runs on the same ref (e.g. rapid pushes to a PR branch).
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Seed sample data
+        run: pnpm fetch-sheet:sample
+
+      - name: Lint & type-check
+        run: pnpm lint && pnpm type-check
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+      - name: Sensitive-field guard (spec §3.2 / §8)
+        run: |
+          if grep -rE "訂位代號|PNR|訂單編號" out/ data/trip-data.json; then
+            echo "::error::Sensitive field found in build output — see SECURITY guarantees."
+            exit 1
+          fi
+          echo "sensitive-field guard passed"

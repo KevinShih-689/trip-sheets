@@ -10,7 +10,7 @@ function SectionTitle({ zh, en }: { zh: string; en: string }): React.JSX.Element
       <Box fontSize="13px" fontWeight="700" letterSpacing="0.06em">
         {zh}
       </Box>
-      <Box fontFamily="pixel" fontSize="7px" color="mario.faint">
+      <Box fontFamily="pixel" fontSize="7px" color="pixel.faint">
         {en}
       </Box>
     </Flex>
@@ -20,13 +20,13 @@ function SectionTitle({ zh, en }: { zh: string; en: string }): React.JSX.Element
 /** 區塊級空狀態:同一套問號方塊元件的小尺寸版(D3 定稿) */
 function SectionEmpty({ text }: { text: string }): React.JSX.Element {
   return (
-    <Flex mx="16px" my="8px" px="16px" py="16px" borderWidth="1px" borderColor="mario.line" borderRadius="10px" align="center" gap="16px">
+    <Flex mx="16px" my="8px" px="16px" py="16px" borderWidth="1px" borderColor="pixel.line" borderRadius="10px" align="center" gap="16px">
       <QBlock size="sm" idle={false} />
       <Box>
-        <Box fontFamily="pixel" fontSize="7px" color="mario.yellow">
+        <Box fontFamily="pixel" fontSize="7px" color="pixel.yellow">
           NO DATA
         </Box>
-        <Box fontSize="12px" color="mario.dim" mt="6px">
+        <Box fontSize="12px" color="pixel.dim" mt="6px">
           {text}
         </Box>
       </Box>
@@ -44,7 +44,7 @@ export default function BacklogPage(): React.JSX.Element {
 
   const header = (
     <Box px={{ base: '20px', lg: '28px' }} pt="24px" pb="4px">
-      <Box fontFamily="pixel" fontSize="8px" color="mario.faint">
+      <Box fontFamily="pixel" fontSize="8px" color="pixel.faint">
         PRE-TRIP
       </Box>
       <Box fontSize="22px" fontWeight="700" mt="8px">

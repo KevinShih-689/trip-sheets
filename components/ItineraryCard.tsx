@@ -25,14 +25,14 @@ export function ItineraryCard({ item }: { item: ItineraryItem }): React.JSX.Elem
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
       >
-        <Box fontFamily="mono" fontSize="12px" lineHeight="1.5" fontWeight="500" color="mario.yellow" w="46px" flexShrink={0}>
+        <Box fontFamily="mono" fontSize="12px" lineHeight="1.5" fontWeight="500" color="pixel.yellow" w="46px" flexShrink={0}>
           {item.timeSlot}
         </Box>
         <Box flex="1">
           <Box fontSize="14px" fontWeight="500">
             {item.name}
           </Box>
-          <Box fontSize="11.5px" color="mario.faint" mt="2px">
+          <Box fontSize="11.5px" color="pixel.faint" mt="2px">
             {[item.category, item.area].filter(Boolean).join(' · ')}
           </Box>
         </Box>
@@ -41,11 +41,11 @@ export function ItineraryCard({ item }: { item: ItineraryItem }): React.JSX.Elem
             <Tag variant="warn">{item.reservationStatus}</Tag>
           </Box>
         ) : item.estimatedCostJpy !== null ? (
-          <Box fontFamily="mono" fontSize="12px" color="mario.faint" alignSelf="center">
+          <Box fontFamily="mono" fontSize="12px" color="pixel.faint" alignSelf="center">
             {formatYen(item.estimatedCostJpy)}
           </Box>
         ) : (
-          <Box className="only-mobile" fontSize="16px" lineHeight="1" color="mario.faint" alignSelf="center">
+          <Box className="only-mobile" fontSize="16px" lineHeight="1" color="pixel.faint" alignSelf="center">
             {open ? '−' : '+'}
           </Box>
         )}
@@ -53,9 +53,9 @@ export function ItineraryCard({ item }: { item: ItineraryItem }): React.JSX.Elem
 
       <Box
         className={open ? 'icard-detail open' : 'icard-detail'}
-        bg="mario.surface"
+        bg="pixel.surface"
         borderWidth="1px"
-        borderColor="mario.line"
+        borderColor="pixel.line"
         borderRadius="10px"
         mx="16px"
         mb="10px"
@@ -67,7 +67,7 @@ export function ItineraryCard({ item }: { item: ItineraryItem }): React.JSX.Elem
         <DetailRow label="營業">{item.openingHours || '-'}</DetailRow>
         <DetailRow label="費用">
           {item.estimatedCostJpy !== null ? (
-            <Box as="span" fontFamily="mono" color="mario.yellow">
+            <Box as="span" fontFamily="mono" color="pixel.yellow">
               {formatYen(item.estimatedCostJpy)}
             </Box>
           ) : (
@@ -79,7 +79,7 @@ export function ItineraryCard({ item }: { item: ItineraryItem }): React.JSX.Elem
         </DetailRow>
         {item.note && (
           <DetailRow label="備註">
-            <Box as="span" color="mario.dim">
+            <Box as="span" color="pixel.dim">
               {item.note}
             </Box>
           </DetailRow>
@@ -101,7 +101,7 @@ export function ItineraryCard({ item }: { item: ItineraryItem }): React.JSX.Elem
 function DetailRow({ label, children }: { label: string; children: React.ReactNode }): React.JSX.Element {
   return (
     <Flex gap="12px" fontSize="12.5px" py="4px">
-      <Box color="mario.faint" w="58px" flexShrink={0}>
+      <Box color="pixel.faint" w="58px" flexShrink={0}>
         {label}
       </Box>
       <Box flex="1">{children}</Box>

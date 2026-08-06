@@ -12,9 +12,9 @@ export function BoardingPass({
   return (
     <Box
       position="relative"
-      bg="mario.surface2"
+      bg="pixel.surface2"
       borderWidth="1px"
-      borderColor="mario.line"
+      borderColor="pixel.line"
       borderRadius="12px"
       mx="16px"
       my="10px"
@@ -45,7 +45,7 @@ export function BoardingPass({
             >
               {flight.departTime}
             </Box>
-            <Box fontFamily="pixel" fontSize="7px" color="mario.faint">
+            <Box fontFamily="pixel" fontSize="7px" color="pixel.faint">
               {flight.from}
             </Box>
           </Box>
@@ -54,7 +54,7 @@ export function BoardingPass({
               w="5px"
               h="5px"
               borderRadius="50%"
-              bg="mario.faint"
+              bg="pixel.faint"
               flexShrink={0}
             />
             <Box
@@ -63,7 +63,7 @@ export function BoardingPass({
               borderTopStyle="dashed"
               borderColor="rgba(235,240,255,0.25)"
             />
-            <Box fontFamily="mono" fontSize="10px" color="mario.faint">
+            <Box fontFamily="mono" fontSize="10px" color="pixel.faint">
               {flight.terminal}
             </Box>
             <Box
@@ -76,7 +76,7 @@ export function BoardingPass({
               w="5px"
               h="5px"
               borderRadius="50%"
-              bg="mario.faint"
+              bg="pixel.faint"
               flexShrink={0}
             />
           </Flex>
@@ -89,7 +89,7 @@ export function BoardingPass({
             >
               {flight.arriveTime}
             </Box>
-            <Box fontFamily="pixel" fontSize="7px" color="mario.faint">
+            <Box fontFamily="pixel" fontSize="7px" color="pixel.faint">
               {flight.to}
             </Box>
           </Box>
@@ -107,7 +107,7 @@ export function BoardingPass({
       >
         <span className="bstub-notch" style={{ left: -8 }} />
         <span className="bstub-notch" style={{ right: -8 }} />
-        <Box fontSize="11.5px" color="mario.dim">
+        <Box fontSize="11.5px" color="pixel.dim">
           行李 {flight.baggage || "-"}
         </Box>
         <div className="barcode" />
@@ -125,7 +125,7 @@ function KvRow({
 }): React.JSX.Element {
   return (
     <Flex justify="space-between" gap="12px" fontSize="12.5px" py="5px">
-      <Box color="mario.faint" flexShrink={0}>
+      <Box color="pixel.faint" flexShrink={0}>
         {k}
       </Box>
       <Box textAlign="right">{children}</Box>
@@ -137,9 +137,9 @@ function KvRow({
 export function HotelCard({ room }: { room: Room }): React.JSX.Element {
   return (
     <Box
-      bg="mario.surface2"
+      bg="pixel.surface2"
       borderWidth="1px"
-      borderColor="mario.line"
+      borderColor="pixel.line"
       borderRadius="12px"
       mx="16px"
       my="10px"
@@ -165,11 +165,11 @@ export function HotelCard({ room }: { room: Room }): React.JSX.Element {
         px="16px"
         py="12px"
         borderYWidth="1px"
-        borderColor="mario.line"
+        borderColor="pixel.line"
         style={{ background: "rgba(67,176,71,0.08)" }}
       >
         <Box flex="1">
-          <Box fontFamily="pixel" fontSize="7px" color="mario.faint" mb="6px">
+          <Box fontFamily="pixel" fontSize="7px" color="pixel.faint" mb="6px">
             CHECK-IN
           </Box>
           <Box
@@ -186,7 +186,7 @@ export function HotelCard({ room }: { room: Room }): React.JSX.Element {
             fontFamily="mono"
             fontSize="11px"
             fontWeight="500"
-            color="mario.greenT"
+            color="pixel.greenT"
             borderWidth="1px"
             borderColor="rgba(67,176,71,0.4)"
             borderRadius="999px"
@@ -198,7 +198,7 @@ export function HotelCard({ room }: { room: Room }): React.JSX.Element {
           </Box>
         )}
         <Box flex="1" textAlign="right">
-          <Box fontFamily="pixel" fontSize="7px" color="mario.faint" mb="6px">
+          <Box fontFamily="pixel" fontSize="7px" color="pixel.faint" mb="6px">
             CHECK-OUT
           </Box>
           <Box
@@ -217,7 +217,7 @@ export function HotelCard({ room }: { room: Room }): React.JSX.Element {
         <KvRow k="總價">{room.totalPrice || "-"}</KvRow>
         {room.freeCancelDeadline && (
           <KvRow k="免費取消">
-            <Box as="span" fontWeight="500" color="mario.redT">
+            <Box as="span" fontWeight="500" color="pixel.redT">
               {room.freeCancelDeadline} 前
             </Box>
           </KvRow>
@@ -256,9 +256,9 @@ export function TicketRow({
     .join(" · ");
   return (
     <Flex
-      bg="mario.surface2"
+      bg="pixel.surface2"
       borderWidth="1px"
-      borderColor="mario.line"
+      borderColor="pixel.line"
       borderRadius="10px"
       mx="16px"
       my="8px"
@@ -270,7 +270,7 @@ export function TicketRow({
           {ticket.item}
         </Box>
         {meta && (
-          <Box fontSize="11.5px" color="mario.faint" mt="3px">
+          <Box fontSize="11.5px" color="pixel.faint" mt="3px">
             {meta}
           </Box>
         )}
@@ -296,9 +296,9 @@ export function TicketRow({
 export function BnbCard({ bnb }: { bnb: BnbCandidate }): React.JSX.Element {
   return (
     <Box
-      bg="mario.surface"
+      bg="pixel.surface"
       borderWidth="1px"
-      borderColor="mario.line"
+      borderColor="pixel.line"
       borderRadius="12px"
       mx="16px"
       my="10px"
@@ -326,7 +326,7 @@ export function BnbCard({ bnb }: { bnb: BnbCandidate }): React.JSX.Element {
               fontFamily="mono"
               fontSize="12px"
               fontWeight="600"
-              color="mario.yellow"
+              color="pixel.yellow"
             >
               {bnb.rating}
             </Box>
@@ -357,11 +357,11 @@ export function BnbCard({ bnb }: { bnb: BnbCandidate }): React.JSX.Element {
                 fontWeight="500"
                 w="14px"
                 flexShrink={0}
-                color="mario.greenT"
+                color="pixel.greenT"
               >
                 +
               </Box>
-              <Box color="mario.dim">{bnb.pros}</Box>
+              <Box color="pixel.dim">{bnb.pros}</Box>
             </Flex>
           )}
           {bnb.cons && (
@@ -372,11 +372,11 @@ export function BnbCard({ bnb }: { bnb: BnbCandidate }): React.JSX.Element {
                 fontWeight="500"
                 w="14px"
                 flexShrink={0}
-                color="mario.redT"
+                color="pixel.redT"
               >
                 −
               </Box>
-              <Box color="mario.dim">{bnb.cons}</Box>
+              <Box color="pixel.dim">{bnb.cons}</Box>
             </Flex>
           )}
         </Box>

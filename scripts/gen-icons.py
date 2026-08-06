@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""產生 PWA icon(瑪利歐問號方塊像素圖,純程式繪製、無版權素材)。
+"""產生 PWA icon(8-bit 問號方塊像素圖,純程式原創繪製、無第三方版權素材)。
 零依賴:手寫 PNG(zlib + struct)。輸出 public/icons/icon-192.png / icon-512.png。"""
 import struct
 import zlib
