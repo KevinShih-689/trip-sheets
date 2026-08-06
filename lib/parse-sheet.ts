@@ -15,6 +15,8 @@ import {
   RESERVATION_STATUSES,
   tripDataSchema,
 } from './schema';
+import { SheetSchemaError } from './sheet-error';
+import { buildEyebrow, buildSplashWorld } from './sheet-tabs';
 import type {
   BnbCandidate,
   Flight,
@@ -27,13 +29,8 @@ import type {
 
 export type Row = readonly string[];
 
-/** Thrown on header drift (spec §3.1.3) or zod validation failure. */
-export class SheetSchemaError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'SheetSchemaError';
-  }
-}
+// Re-exported for backward compatibility: callers/tests import it from here.
+export { SheetSchemaError };
 
 export const DAY_HEADERS = [
   '時段',
@@ -245,18 +242,40 @@ export interface DayInput {
   rows: readonly Row[];
 }
 
+export interface BuildTripDataInput {
+  /** Spreadsheet title (Sheets `properties.title`) — drives `meta.title`. */
+  readonly title: string;
+  readonly dayInputs: readonly DayInput[];
+  readonly backlogRows: readonly Row[];
+  readonly generatedAt: string;
+}
+
 /**
  * Assemble and validate the full TripData from raw sheet rows.
- * Throws `SheetSchemaError` on header drift or zod validation failure.
+ * `meta.title` comes from the spreadsheet title; `meta.eyebrow` / `meta.splashWorld`
+ * are derived from the resolved dates. Days are sorted ascending by date.
+ * Throws `SheetSchemaError` on empty title, header drift, or zod validation failure.
  */
-export function buildTripData(
-  dayInputs: readonly DayInput[],
-  backlogRows: readonly Row[],
-  generatedAt: string,
-): TripData {
+export function buildTripData(input: BuildTripDataInput): TripData {
+  const { title, dayInputs, backlogRows, generatedAt } = input;
+
+  if (title.trim() === '') {
+    throw new SheetSchemaError('試算表標題為空,無法產生 meta.title(請確認 Sheets API 回傳)。');
+  }
+
+  const days = dayInputs
+    .map((d) => parseDayTab(d.isoDate, d.tab, d.rows))
+    .sort((a, b) => a.date.localeCompare(b.date));
+  const isoDates = days.map((d) => d.date);
+
   const data: TripData = {
     generatedAt,
-    days: dayInputs.map((d) => parseDayTab(d.isoDate, d.tab, d.rows)),
+    meta: {
+      title: title.trim(),
+      eyebrow: buildEyebrow(isoDates),
+      splashWorld: buildSplashWorld(isoDates),
+    },
+    days,
     backlog: parseBacklog(backlogRows),
   };
 

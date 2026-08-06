@@ -3,7 +3,6 @@
 import { Box, Flex } from '@chakra-ui/react';
 import { useEffect, useState } from 'react';
 import { QBlock } from './QBlock';
-import { SPLASH_WORLD } from '@/lib/constants';
 
 const SESSION_KEY = 'trip-splash-shown';
 const DURATION_MS = 1200;
@@ -13,7 +12,11 @@ const FADE_MS = 250;
  * 虛擬載入 splash(spec §4.3):每 session 播一次、~1.2s、
  * prefers-reduced-motion 直接跳過。純品牌動畫,無實際請求。
  */
-export function Splash(): React.JSX.Element | null {
+interface Props {
+  splashWorld: string;
+}
+
+export function Splash({ splashWorld }: Props): React.JSX.Element | null {
   const [phase, setPhase] = useState<'show' | 'fade' | 'done'>('show');
 
   useEffect(() => {
@@ -58,7 +61,7 @@ export function Splash(): React.JSX.Element | null {
           <div className="splash-pfill load" />
         </div>
         <Box fontFamily="pixel" fontSize="8px" color="pixel.faint" mt="18px">
-          {SPLASH_WORLD}
+          {splashWorld}
         </Box>
       </Flex>
       <div className="splash-ground run" />

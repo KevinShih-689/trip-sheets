@@ -9,8 +9,9 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { google } from 'googleapis';
 import { z } from 'zod';
-import { TRIP_DATES, dayTabName } from '../lib/constants';
+import { BACKLOG_TAB } from '../lib/constants';
 import { SheetSchemaError, buildTripData, type DayInput, type Row } from '../lib/parse-sheet';
+import { resolveDateTabs } from '../lib/sheet-tabs';
 
 function fail(message: string): never {
   console.error(`\n[fetch-sheet] FAILED: ${message}`);
@@ -34,9 +35,33 @@ async function main(): Promise<void> {
   });
   const sheets = google.sheets({ version: 'v4', auth });
 
-  const dayRanges = TRIP_DATES.map((d) => `'${dayTabName(d)}'!A1:J200`);
-  const ranges = [...dayRanges, `'Backlog'!A1:M60`];
+  // 先取試算表 metadata:標題(→ meta.title)與所有 tab 名稱(→ 動態日期偵測)。
+  const metaRes = await sheets.spreadsheets.get({
+    spreadsheetId: sheetId,
+    fields: 'properties.title,sheets.properties.title',
+  });
+  const title = metaRes.data.properties?.title ?? '';
+  const tabNames = (metaRes.data.sheets ?? [])
+    .map((s) => s.properties?.title)
+    .filter((t): t is string => typeof t === 'string');
 
+  if (!tabNames.includes(BACKLOG_TAB)) fail(`Sheet 中找不到「${BACKLOG_TAB}」tab`);
+
+  let dateTabs;
+  try {
+    dateTabs = resolveDateTabs(tabNames, new Date());
+  } catch (err) {
+    if (err instanceof SheetSchemaError) fail(err.message);
+    throw err;
+  }
+
+  const dayRanges = dateTabs.map((t) => `'${t.tab}'!A1:J200`);
+  const ranges = [...dayRanges, `'${BACKLOG_TAB}'!A1:M60`];
+
+  console.log(
+    `[fetch-sheet] 偵測到 ${dateTabs.length} 個日期 tab` +
+      `(${dateTabs[0]?.isoDate} ~ ${dateTabs[dateTabs.length - 1]?.isoDate})、標題「${title}」`,
+  );
   console.log(`[fetch-sheet] batchGet ${ranges.length} ranges from sheet ${sheetId.slice(0, 8)}…`);
   const res = await sheets.spreadsheets.values.batchGet({ spreadsheetId: sheetId, ranges });
   const valueRanges = res.data.valueRanges ?? [];
@@ -44,16 +69,16 @@ async function main(): Promise<void> {
     fail(`API 回傳 range 數量不符:預期 ${ranges.length},實際 ${valueRanges.length}`);
   }
 
-  const dayInputs: DayInput[] = TRIP_DATES.map((isoDate, i) => ({
-    isoDate,
-    tab: dayTabName(isoDate),
+  const dayInputs: DayInput[] = dateTabs.map((t, i) => ({
+    isoDate: t.isoDate,
+    tab: t.tab,
     rows: (valueRanges[i]?.values ?? []) as Row[],
   }));
-  const backlogRows = (valueRanges[TRIP_DATES.length]?.values ?? []) as Row[];
+  const backlogRows = (valueRanges[dateTabs.length]?.values ?? []) as Row[];
 
   let data;
   try {
-    data = buildTripData(dayInputs, backlogRows, new Date().toISOString());
+    data = buildTripData({ title, dayInputs, backlogRows, generatedAt: new Date().toISOString() });
   } catch (err) {
     if (err instanceof SheetSchemaError) fail(err.message);
     throw err;

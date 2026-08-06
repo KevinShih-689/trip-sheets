@@ -93,8 +93,15 @@ export const bnbCandidateSchema = z.object({
   note: z.string(),
 });
 
+export const tripMetaSchema = z.object({
+  title: z.string().min(1),
+  eyebrow: z.string(),
+  splashWorld: z.string(),
+});
+
 export const tripDataSchema = z.object({
   generatedAt: z.string(),
+  meta: tripMetaSchema,
   days: z.array(tripDaySchema),
   backlog: z.object({
     flights: z.array(flightSchema),

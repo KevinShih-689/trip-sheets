@@ -5,7 +5,6 @@ import { Providers } from './providers';
 import { AppNav } from '@/components/AppNav';
 import { Splash } from '@/components/Splash';
 import { SwRegister } from '@/components/SwRegister';
-import { TRIP_EYEBROW, TRIP_TITLE } from '@/lib/constants';
 import { dayCostSum } from '@/lib/format';
 import { getTripData } from '@/lib/trip-data';
 import './globals.css';
@@ -31,12 +30,15 @@ const pressStart = Press_Start_2P({
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
 
-export const metadata: Metadata = {
-  title: `${TRIP_TITLE} | Trip Sheets`,
-  description: `${TRIP_EYEBROW} 行程網站`,
-  manifest: `${basePath}/manifest.json`,
-  icons: { icon: `${basePath}/icons/icon-192.png`, apple: `${basePath}/icons/icon-192.png` },
-};
+export function generateMetadata(): Metadata {
+  const { meta } = getTripData();
+  return {
+    title: `${meta.title} | Trip Sheets`,
+    description: `${meta.eyebrow} 行程網站`,
+    manifest: `${basePath}/manifest.json`,
+    icons: { icon: `${basePath}/icons/icon-192.png`, apple: `${basePath}/icons/icon-192.png` },
+  };
+}
 
 export const viewport: Viewport = {
   themeColor: '#0B0D14',
@@ -57,10 +59,16 @@ export default function RootLayout({ children }: { children: ReactNode }): React
     <html lang="zh-Hant" className={`${notoSans.variable} ${plexMono.variable} ${pressStart.variable}`} suppressHydrationWarning>
       <body>
         <Providers>
-          <Splash />
+          <Splash splashWorld={data.meta.splashWorld} />
           <SwRegister />
           <div className="app-shell">
-            <AppNav days={navDays} generatedAt={data.generatedAt} totalYen={totalYen} />
+            <AppNav
+              days={navDays}
+              generatedAt={data.generatedAt}
+              totalYen={totalYen}
+              title={data.meta.title}
+              eyebrow={data.meta.eyebrow}
+            />
             <main className="app-main">{children}</main>
           </div>
         </Providers>

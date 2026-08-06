@@ -4,7 +4,6 @@ import { EmptyState } from "@/components/EmptyState";
 import { ItineraryCard } from "@/components/ItineraryCard";
 import { MapEmbed } from "@/components/MapEmbed";
 import { Tag } from "@/components/Tag";
-import { TRIP_DATES } from "@/lib/constants";
 import { dayCostSum, formatYen, shortDate } from "@/lib/format";
 import { getTripData } from "@/lib/trip-data";
 import type { TripDay } from "@/lib/types";
@@ -20,7 +19,7 @@ const WEEKDAY_EN: Record<string, string> = {
 };
 
 export function generateStaticParams(): { date: string }[] {
-  return TRIP_DATES.map((date) => ({ date }));
+  return getTripData().days.map((d) => ({ date: d.date }));
 }
 
 export default async function DayPage({
@@ -33,7 +32,7 @@ export default async function DayPage({
   const day = data.days.find((d) => d.date === date);
   if (!day) notFound();
 
-  const dayIndex = TRIP_DATES.indexOf(date) + 1;
+  const dayIndex = data.days.findIndex((d) => d.date === date) + 1;
   const subtotal = dayCostSum(day.items.map((i) => i.estimatedCostJpy));
 
   return (

@@ -1,26 +1,15 @@
-/** 換旅行時只需改這一段 + Sheets(SHEET_ID secret) */
-export const TRIP_TITLE = '大阪・六日';
-export const TRIP_EYEBROW = 'DEC 14 - 19 · 2026';
-export const SPLASH_WORLD = 'WORLD 12-14 · OSAKA';
-
-export const TRIP_YEAR = 2026;
-export const TRIP_MONTH = 12;
-export const TRIP_START_DAY = 14;
-export const TRIP_END_DAY = 19;
-
-export const TRIP_DATES: readonly string[] = Array.from(
-  { length: TRIP_END_DAY - TRIP_START_DAY + 1 },
-  (_, i) => `${TRIP_YEAR}-${TRIP_MONTH}-${TRIP_START_DAY + i}`,
-);
+/**
+ * Sheet 結構契約(非旅程內容)。
+ *
+ * 旅程標題、日期與天數已改由 Google Sheet 驅動(標題取試算表名稱、日期由 tab
+ * 名稱偵測),見 `lib/sheet-tabs.ts`。此檔只保留與 Sheet 結構相關、無法從資料
+ * 推得的常數:星期字表、Backlog tab 名與其固定版面。
+ */
 
 export const ZH_WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'] as const;
 
-/** Google Sheets 上的日期 tab 名稱,如 `12.14 (一)` */
-export function dayTabName(isoDate: string): string {
-  const d = new Date(`${isoDate}T00:00:00`);
-  const wk = ZH_WEEKDAYS[d.getDay()] ?? '?';
-  return `${d.getMonth() + 1}.${d.getDate()} (${wk})`;
-}
+/** Backlog tab 名稱(彙整航班/住宿/USJ/民宿候選的固定分頁) */
+export const BACKLOG_TAB = 'Backlog';
 
 export const SHEETS_EDIT_URL_ENV = 'NEXT_PUBLIC_SHEETS_URL';
 
