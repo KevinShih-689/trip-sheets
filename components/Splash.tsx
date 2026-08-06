@@ -39,7 +39,7 @@ export function Splash(): React.JSX.Element | null {
       inset="0"
       zIndex={1000}
       direction="column"
-      bg="mario.pagebg"
+      bg="pixel.pagebg"
       opacity={phase === 'fade' ? 0 : 1}
       transition={`opacity ${FADE_MS}ms ease-out`}
       aria-hidden="true"
@@ -51,13 +51,13 @@ export function Splash(): React.JSX.Element | null {
           </div>
           <QBlock />
         </Box>
-        <Box className="ldots" fontFamily="pixel" fontSize="11px" color="mario.text" mt="40px">
+        <Box className="ldots" fontFamily="pixel" fontSize="11px" color="pixel.text" mt="40px">
           LOADING
         </Box>
         <div className="splash-pbar" style={{ marginTop: 18 }}>
           <div className="splash-pfill load" />
         </div>
-        <Box fontFamily="pixel" fontSize="8px" color="mario.faint" mt="18px">
+        <Box fontFamily="pixel" fontSize="8px" color="pixel.faint" mt="18px">
           {SPLASH_WORLD}
         </Box>
       </Flex>

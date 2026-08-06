@@ -1,21 +1,21 @@
 import { createSystem, defaultConfig, defineConfig } from '@chakra-ui/react';
 
 /**
- * 定稿色彩 tokens(spec §4.4,Claude Design Trip UI v3)。
- * 四個瑪利歐代表色僅作強調;底色為地下關卡深藍夜色調。
+ * 定稿色彩 tokens(Claude Design Trip UI v3)。
+ * 四個高飽和色僅作強調;底色為深藍夜色調(retro 8-bit / arcade 風)。
  */
 const config = defineConfig({
   globalCss: {
     'html, body': {
-      bg: 'mario.pagebg',
-      color: 'mario.text',
+      bg: 'pixel.pagebg',
+      color: 'pixel.text',
       fontFamily: 'body',
     },
   },
   theme: {
     tokens: {
       colors: {
-        mario: {
+        pixel: {
           pagebg: { value: '#0B0D14' },
           bg: { value: '#12141D' },
           surface: { value: '#1A1D28' },

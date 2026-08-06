@@ -48,6 +48,9 @@ jobs:
       - name: Lint & type-check
         run: pnpm lint && pnpm type-check
 
+      - name: Unit tests
+        run: pnpm test
+
       - name: Build
         run: pnpm build
 
