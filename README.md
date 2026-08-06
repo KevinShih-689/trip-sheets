@@ -23,11 +23,11 @@ Edit your trip in a spreadsheet (from your phone or laptop), push a button, and 
 | Layer      | Choice                                       |
 | ---------- | -------------------------------------------- |
 | Framework  | Next.js 15 (App Router, `output: 'export'`)  |
-| Language   | TypeScript (strict), no `any`                |
-| UI         | Chakra UI v3 + Emotion                       |
-| Data fetch | `googleapis` (Sheets API, read-only) + `zod` |
-| Testing    | Vitest (data-boundary unit tests)            |
-| Runtime    | Node 22, pnpm 9                              |
+| Language   | TypeScript 5.7 (strict), no `any`            |
+| UI         | Chakra UI v3 + Emotion 11                    |
+| Data fetch | `googleapis` 144 (Sheets API, read-only) + Zod 3 |
+| Testing    | Vitest 3 (data-boundary unit tests)          |
+| Runtime    | Node 22 (`.nvmrc`), pnpm 9                   |
 | CI/CD      | GitHub Actions → GitHub Pages                |
 
 ## Project Structure
@@ -112,6 +112,11 @@ Then set **Settings → Pages → Source = GitHub Actions**.
 Push to `main`, or run the **Deploy to GitHub Pages** workflow manually (`workflow_dispatch`) from the Actions tab or the GitHub mobile app. The site publishes to `https://<user>.github.io/<repo>/`.
 
 ---
+
+## Prerequisites
+
+- Node 22 — use `nvm use` or `fnm use` to pick it up from `.nvmrc`
+- pnpm 9
 
 ## Local Development
 
