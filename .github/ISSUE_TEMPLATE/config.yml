@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 🔐 Security vulnerability
+    url: https://github.com/KevinShih-689/trip-sheets/security/advisories/new
+    about: Please report security issues privately, not as public issues. See SECURITY.md.
+  - name: 💬 Questions & setup help
+    url: https://github.com/KevinShih-689/trip-sheets/discussions
+    about: Ask questions about setup (Google Cloud, Sheets, deployment) here.

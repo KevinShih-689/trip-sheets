@@ -1,0 +1,61 @@
+name: 🐛 Bug report
+description: Report something that isn't working as expected
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug report. Please fill out the sections below.
+        ⚠️ **Do not paste service-account keys, PNRs, booking reference numbers, or any personal data.**
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear and concise description of the bug.
+      placeholder: When I ..., I expected ..., but instead ...
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: How can we reproduce it?
+      placeholder: |
+        1. Run `pnpm ...`
+        2. Open ...
+        3. See error
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part?
+      options:
+        - Data fetch (scripts/fetch-sheet.ts)
+        - Frontend / UI
+        - Build / static export
+        - CI/CD (GitHub Actions / Pages)
+        - PWA / offline
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, Node version, pnpm version, browser (if UI).
+      placeholder: |
+        - OS: macOS 15
+        - Node: 22.x
+        - pnpm: 9.x
+        - Browser: Chrome 130
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs / screenshots
+      description: Paste terminal output or attach screenshots. Redact any secrets.
+      render: shell
+    validations:
+      required: false
