@@ -336,8 +336,27 @@ a:hover {
   bottom: 4px;
 }
 
+/* ── Mobile 總覽:地圖固定於上,垂直捲動只限天數清單(不讓地圖被捲走)── */
+.ov-root {
+  display: flex;
+  flex-direction: column;
+  height: calc(100dvh - var(--tabbar-h) - env(safe-area-inset-bottom));
+  overflow: hidden;
+}
+.ov-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+.ov-map {
+  flex: none;
+}
 .ov-list {
   border-top: 1px solid var(--line);
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 /* 行程卡片:mobile 點擊展開;desktop 常駐展開 */
@@ -439,12 +458,20 @@ a:hover {
   }
 
   /* 總覽:list + 大地圖。清單自體垂直捲動,地圖 sticky 釘住不隨清單移動。 */
+  /* desktop 不用 mobile 的固定高度欄版面(改用下方 grid + sticky) */
+  .ov-root {
+    display: block;
+    height: auto;
+    overflow: visible;
+  }
   .ov-body {
     display: grid;
     grid-template-columns: 440px 1fr;
     gap: 20px;
     padding: 0 28px 24px;
     align-items: start;
+    flex: none;
+    min-height: 0;
   }
   /* .ov-body .ov-list 提高 specificity 以蓋過 .panel-desktop 的 overflow: hidden */
   .ov-body .ov-list {
@@ -454,12 +481,13 @@ a:hover {
     overflow-y: auto;
     scrollbar-width: thin;
   }
+  /* 地圖 sticky 釘住,高度約佔畫面一半(不再拉滿整個視口) */
   .ov-map {
     margin: 0 !important;
     position: sticky;
     top: 24px;
-    height: calc(100dvh - 48px) !important;
-    min-height: 560px;
+    height: 50dvh !important;
+    min-height: 360px;
   }
 
   /* 每日:timeline + 右側摘要欄 */

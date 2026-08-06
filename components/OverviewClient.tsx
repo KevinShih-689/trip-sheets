@@ -46,7 +46,7 @@ export function OverviewClient({ days, generatedAt, title, eyebrow }: Props): Re
   const focusTag = `${isToday && focusDate === todayIso() ? 'TODAY' : 'FOCUS'} · ${focusDate.slice(5).replace('-', '/')}`;
 
   return (
-    <Box>
+    <Box className="ov-root">
       {/* Mobile header(定稿不動) */}
       <Box className="only-mobile" px="20px" pt="24px" pb="14px">
         <Box fontFamily="pixel" fontSize="8px" letterSpacing="0.06em" color="pixel.faint">
