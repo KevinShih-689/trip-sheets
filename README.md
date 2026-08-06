@@ -54,7 +54,7 @@ trip-sheets/
 │   ├── parse-sheet.ts             # the single data boundary (pure: parse + validate + filter)
 │   ├── parse-sheet.test.ts        # Vitest unit tests for the data boundary
 │   ├── theme.ts                   # Chakra custom theme
-│   ├── constants.ts               # date range, sheet layout constants
+│   ├── constants.ts               # sheet-structure constants (Backlog tab, layout, weekdays)
 │   └── trip-data.ts               # getTripData()
 ├── scripts/fetch-sheet.ts         # IO + CLI wrapper around lib/parse-sheet.ts
 ├── data/
@@ -72,7 +72,15 @@ This repo is meant to be forked. Here's the end-to-end setup.
 
 ### 1. Prepare the Google Sheet
 
-Import [`doc/sheet.xlsx`](doc/sheet.xlsx) into Google Sheets (Google Drive → New → File upload → open with Google Sheets), then edit your trip data in it. The file already has the required layout — a `Backlog` tab plus 6 date tabs with the correct headers and dropdowns — so you just fill in your own itinerary.
+Import [`doc/sheet.xlsx`](doc/sheet.xlsx) into Google Sheets (Google Drive → New → File upload → open with Google Sheets), then edit your trip data in it. The file already has the required layout — a `Backlog` tab plus date tabs with the correct headers and dropdowns — so you just fill in your own itinerary.
+
+**The sheet is the single source of truth for title and dates** (no code edit needed):
+
+- **Trip title** comes from the **spreadsheet name** itself (rename the file in Google Sheets to rename the trip).
+- **Dates & number of days** come from the **date tabs that currently exist**. Each date tab is named `M.D (週幾)` (e.g. `12.14 (一)`). Add or remove date tabs and the site renders exactly those days after the next rebuild.
+- The eyebrow (`DEC 14 - 19 · 2026`) and splash label are derived automatically from the detected date range.
+
+> Date tabs carry no year — the build infers it from the **weekday** in each tab name. If a tab's weekday doesn't match its date, the build **fails and names the tab** (it never guesses silently). Cross-year trips are not supported.
 
 > Row counts are **not** fixed — the fetch script reads each block until the first fully-blank row, so you can add rows freely. It will error (not silently truncate) if a Backlog table overflows into the next table's header row.
 
@@ -106,7 +114,8 @@ Then set **Settings → Pages → Source = GitHub Actions**.
 ### 4. Adjust the template for your trip
 
 - `next.config.ts` — `basePath` is injected by CI as `/<repo-name>`; nothing to change unless you deploy elsewhere.
-- `lib/constants.ts` — set your **date range** and any sheet-layout constants.
+- **Title & dates need no code edit** — rename the spreadsheet and add/remove date tabs (see step 1).
+- `lib/constants.ts` — only sheet-structure constants remain (the `Backlog` tab name, its fixed layout, the weekday table). Adjust only if you change the sheet's structure.
 - Tab labels / branding in `components/` and `lib/theme.ts` as desired.
 
 ### 5. Deploy
@@ -142,7 +151,7 @@ Open http://localhost:3000.
 
 | Command                   | Description                                               |
 | ------------------------- | --------------------------------------------------------- |
-| `pnpm fetch-sheet`        | Pull all 7 tabs, validate, filter, write `trip-data.json` |
+| `pnpm fetch-sheet`        | Enumerate date tabs + Backlog, validate, filter, write `trip-data.json` |
 | `pnpm fetch-sheet:sample` | Use the committed sample data instead of a live sheet     |
 | `pnpm dev`                | Start the Next.js dev server                              |
 | `pnpm build`              | Static export to `out/`                                   |
@@ -167,7 +176,7 @@ sequenceDiagram
 
     Dev->>GA: Trigger (dispatch / schedule / push main)
     GA->>GA: checkout + pnpm install --frozen-lockfile
-    GA->>GS: pnpm fetch-sheet (batchGet 7 tabs)
+    GA->>GS: pnpm fetch-sheet (get title + tabs, then batchGet)
     GS-->>GA: raw rows
     GA->>GA: verify headers + zod parse + drop sensitive fields
     Note over GA: write data/trip-data.json<br/>(fetch failure → abort, no deploy)
@@ -191,7 +200,7 @@ sequenceDiagram
 
 - **Not real-time** — changes require a rebuild (manual dispatch or the daily cron). This is the deliberate trade-off for architectural simplicity.
 - **Map needs network** — the embedded map won't render offline (a striped placeholder is shown); all other content works offline.
-- **Reuse** — swap `SHEET_ID` and adjust `lib/constants.ts` (date range) and the repo name; the schema stays the same.
+- **Reuse** — swap `SHEET_ID` and the repo name; rename the spreadsheet and set its date tabs. No code edit needed for a new trip; the schema stays the same.
 
 ## Documentation
 

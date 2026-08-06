@@ -3,5 +3,12 @@ import { OverviewClient } from '@/components/OverviewClient';
 
 export default function OverviewPage(): React.JSX.Element {
   const data = getTripData();
-  return <OverviewClient days={data.days} generatedAt={data.generatedAt} />;
+  return (
+    <OverviewClient
+      days={data.days}
+      generatedAt={data.generatedAt}
+      title={data.meta.title}
+      eyebrow={data.meta.eyebrow}
+    />
+  );
 }

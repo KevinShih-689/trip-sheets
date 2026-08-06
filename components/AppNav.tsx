@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { TRIP_EYEBROW, TRIP_TITLE } from '@/lib/constants';
+import { useEffect, useRef } from 'react';
 import { formatGeneratedAt, formatYen } from '@/lib/format';
 
 export interface NavDay {
@@ -15,16 +15,28 @@ interface Props {
   days: readonly NavDay[];
   generatedAt: string;
   totalYen: number;
+  title: string;
+  eyebrow: string;
 }
 
 /** 響應式導覽:<1024 底部 tab bar(mobile 定稿)/ ≥1024 左側 sidebar(desktop 定稿) */
-export function AppNav({ days, generatedAt, totalYen }: Props): React.JSX.Element {
+export function AppNav({ days, generatedAt, totalYen, title, eyebrow }: Props): React.JSX.Element {
   const pathname = usePathname();
+  const daysScrollRef = useRef<HTMLDivElement>(null);
 
   const isActive = (href: string): boolean => {
     if (href === '/') return pathname === '/' || pathname === '';
     return pathname.startsWith(href);
   };
+
+  // 切到某日頁時,把該日 tab 捲進底部 bar 可視範圍(天數多時尤其需要)。
+  // Desktop 下 .bottom-nav 為 display:none,scrollIntoView 無副作用。
+  useEffect(() => {
+    const container = daysScrollRef.current;
+    if (!container) return;
+    const active = container.querySelector('[data-active="true"]');
+    active?.scrollIntoView({ inline: 'nearest', block: 'nearest' });
+  }, [pathname]);
 
   return (
     <>
@@ -32,9 +44,9 @@ export function AppNav({ days, generatedAt, totalYen }: Props): React.JSX.Elemen
       <aside className="side-nav">
         <div className="brand">
           <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 8, letterSpacing: '0.06em', color: 'var(--faint)' }}>
-            {TRIP_EYEBROW}
+            {eyebrow}
           </div>
-          <div style={{ fontSize: 19, fontWeight: 700, marginTop: 9 }}>{TRIP_TITLE}</div>
+          <div style={{ fontSize: 19, fontWeight: 700, marginTop: 9 }}>{title}</div>
         </div>
         <div className="snav">
           <Link href="/" className={isActive('/') ? 'sitem on' : 'sitem'}>
@@ -58,37 +70,47 @@ export function AppNav({ days, generatedAt, totalYen }: Props): React.JSX.Elemen
         </div>
       </aside>
 
-      {/* ── Mobile bottom tab bar ── */}
-      <nav
-        className="bottom-nav"
-        style={{
-          position: 'fixed',
-          bottom: 0,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: '100%',
-          maxWidth: 430,
-          display: 'flex',
-          alignItems: 'stretch',
-          borderTop: '1px solid var(--line)',
-          background: '#0D0F17',
-          paddingBottom: 'env(safe-area-inset-bottom)',
-          zIndex: 100,
-        }}
-      >
-        <MobileTab href="/" active={isActive('/')} label="總覽" />
-        {days.map((d) => (
-          <MobileTab key={d.date} href={`/day/${d.date}`} active={isActive(`/day/${d.date}`)} label={d.dayNum} mono />
-        ))}
-        <MobileTab href="/backlog" active={isActive('/backlog')} label="行前" />
+      {/* ── Mobile bottom tab bar ──
+          「總覽」固定最左、「行前」固定最右;中間日期 tab 可水平捲動。 */}
+      <nav className="bottom-nav">
+        <MobileTab href="/" active={isActive('/')} label="總覽" fixed />
+        <div className="bottom-nav-days" ref={daysScrollRef}>
+          {days.map((d) => (
+            <MobileTab
+              key={d.date}
+              href={`/day/${d.date}`}
+              active={isActive(`/day/${d.date}`)}
+              label={d.dayNum}
+              mono
+            />
+          ))}
+        </div>
+        <MobileTab href="/backlog" active={isActive('/backlog')} label="行前" fixed />
       </nav>
     </>
   );
 }
 
-function MobileTab({ href, active, label, mono = false }: { href: string; active: boolean; label: string; mono?: boolean }): React.JSX.Element {
+function MobileTab({
+  href,
+  active,
+  label,
+  mono = false,
+  fixed = false,
+}: {
+  href: string;
+  active: boolean;
+  label: string;
+  mono?: boolean;
+  fixed?: boolean;
+}): React.JSX.Element {
   return (
-    <Link href={href} style={{ flex: 1, color: 'inherit' }}>
+    <Link
+      href={href}
+      data-active={active}
+      className={fixed ? 'mtab mtab-fixed' : 'mtab'}
+      style={{ color: 'inherit' }}
+    >
       <span
         style={{
           display: 'flex',

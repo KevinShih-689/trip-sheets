@@ -195,6 +195,36 @@ a:hover {
 }
 .side-nav { display: none; }
 
+/* ── Mobile 底部 tab bar ──
+   「總覽」/「行前」固定於兩端,中間日期 tab 水平捲動(天數由 Sheet 決定,可能超寬)。 */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 430px;
+  display: flex;
+  align-items: stretch;
+  border-top: 1px solid var(--line);
+  background: #0d0f17;
+  padding-bottom: env(safe-area-inset-bottom);
+  z-index: 100;
+}
+.mtab { display: flex; }
+/* 固定端(總覽/行前):不捲動、不被中間容器擠壓 */
+.mtab-fixed { flex: 0 0 56px; }
+/* 中間日期 tab 捲動容器:天數少時平分填滿(外觀同現況),天數多時每格保底 44px 觸發水平捲動 */
+.bottom-nav-days {
+  flex: 1;
+  display: flex;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.bottom-nav-days::-webkit-scrollbar { display: none; }
+.bottom-nav-days > .mtab { flex: 1 0 44px; }
+
 /* 斷點工具類:只負責隱藏,不強制 display 型別(否則會蓋掉 flex/grid) */
 @media (max-width: 1023.98px) {
   .only-desktop { display: none !important; }
@@ -242,10 +272,23 @@ a:hover {
   .mbody-pad { padding: 0 28px 24px; }
   .panel-desktop { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; align-self: start; }
 
-  /* 總覽:list + 大地圖 */
-  .ov-body { display: grid; grid-template-columns: 440px 1fr; gap: 20px; padding: 0 28px 24px; }
-  .ov-list { order: -1; border-top: none; }
-  .ov-map { margin: 0 !important; height: auto !important; min-height: 560px; }
+  /* 總覽:list + 大地圖。清單自體垂直捲動,地圖 sticky 釘住不隨清單移動。 */
+  .ov-body { display: grid; grid-template-columns: 440px 1fr; gap: 20px; padding: 0 28px 24px; align-items: start; }
+  /* .ov-body .ov-list 提高 specificity 以蓋過 .panel-desktop 的 overflow: hidden */
+  .ov-body .ov-list {
+    order: -1;
+    border-top: none;
+    max-height: calc(100dvh - 96px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+  .ov-map {
+    margin: 0 !important;
+    position: sticky;
+    top: 24px;
+    height: calc(100dvh - 48px) !important;
+    min-height: 560px;
+  }
 
   /* 每日:timeline + 右側摘要欄 */
   .day-grid { display: grid; grid-template-columns: 1fr 300px; gap: 20px; padding: 0 28px 24px; align-items: start; }

@@ -162,13 +162,43 @@ describe('parseBacklog + buildTripData integration', () => {
   });
 
   it('buildTripData validates and returns a well-formed TripData', () => {
-    const days = [
+    const dayInputs = [
       { isoDate: '2026-12-14', tab: '12.14 (一)', rows: dayRowsWith([]) },
     ];
-    const data = buildTripData(days, backlogRows(), '2026-08-04T06:00:00.000Z');
+    const data = buildTripData({
+      title: '大阪・六日',
+      dayInputs,
+      backlogRows: backlogRows(),
+      generatedAt: '2026-08-04T06:00:00.000Z',
+    });
     expect(data.generatedAt).toBe('2026-08-04T06:00:00.000Z');
     expect(data.days).toHaveLength(1);
     expect(data.days[0]?.weekdayZh).toBe('一');
+  });
+
+  it('buildTripData sets meta.title and derives eyebrow/splashWorld from dates', () => {
+    const dayInputs = [
+      { isoDate: '2026-12-19', tab: '12.19 (六)', rows: dayRowsWith([]) },
+      { isoDate: '2026-12-14', tab: '12.14 (一)', rows: dayRowsWith([]) },
+    ];
+    const data = buildTripData({
+      title: '  大阪・六日  ',
+      dayInputs,
+      backlogRows: backlogRows(),
+      generatedAt: 'now',
+    });
+    expect(data.meta.title).toBe('大阪・六日'); // trimmed
+    expect(data.meta.eyebrow).toBe('DEC 14 - 19 · 2026');
+    expect(data.meta.splashWorld).toBe('WORLD 12-14');
+    // days 依日期升冪排序
+    expect(data.days.map((d) => d.date)).toEqual(['2026-12-14', '2026-12-19']);
+  });
+
+  it('buildTripData throws SheetSchemaError on an empty title', () => {
+    const dayInputs = [{ isoDate: '2026-12-14', tab: '12.14 (一)', rows: dayRowsWith([]) }];
+    expect(() =>
+      buildTripData({ title: '   ', dayInputs, backlogRows: backlogRows(), generatedAt: 'now' }),
+    ).toThrow(SheetSchemaError);
   });
 
   it('buildTripData throws SheetSchemaError when a backlog header drifted', () => {
@@ -176,7 +206,9 @@ describe('parseBacklog + buildTripData integration', () => {
     const driftedRoomHeader: string[] = [...ROOM_HEADERS];
     driftedRoomHeader[8] = '訂單號'; // was 訂單編號
     rows[7] = driftedRoomHeader;
-    const days = [{ isoDate: '2026-12-14', tab: '12.14 (一)', rows: dayRowsWith([]) }];
-    expect(() => buildTripData(days, rows, 'now')).toThrow(SheetSchemaError);
+    const dayInputs = [{ isoDate: '2026-12-14', tab: '12.14 (一)', rows: dayRowsWith([]) }];
+    expect(() =>
+      buildTripData({ title: '大阪・六日', dayInputs, backlogRows: rows, generatedAt: 'now' }),
+    ).toThrow(SheetSchemaError);
   });
 });

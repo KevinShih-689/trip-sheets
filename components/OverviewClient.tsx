@@ -4,7 +4,6 @@ import { Box, Flex } from '@chakra-ui/react';
 import { useEffect, useMemo, useState } from 'react';
 import { MapEmbed } from './MapEmbed';
 import { Tag } from './Tag';
-import { TRIP_DATES, TRIP_EYEBROW, TRIP_TITLE } from '@/lib/constants';
 import { dayCostSum, formatGeneratedAt, formatYen } from '@/lib/format';
 import type { TripDay } from '@/lib/types';
 
@@ -21,21 +20,23 @@ function todayIso(): string {
 interface Props {
   days: readonly TripDay[];
   generatedAt: string;
+  title: string;
+  eyebrow: string;
 }
 
-export function OverviewClient({ days, generatedAt }: Props): React.JSX.Element {
-  const first = TRIP_DATES[0] ?? '2026-12-14';
+export function OverviewClient({ days, generatedAt, title, eyebrow }: Props): React.JSX.Element {
+  const first = days[0]?.date ?? '';
   const [focusDate, setFocusDate] = useState<string>(first);
   const [isToday, setIsToday] = useState<boolean>(false);
 
   // 依裝置日期自動 focus 當天(spec §4.2);SSR 先渲染第一天避免 hydration mismatch
   useEffect(() => {
     const t = todayIso();
-    if (TRIP_DATES.includes(t)) {
+    if (days.some((d) => d.date === t)) {
       setFocusDate(t);
       setIsToday(true);
     }
-  }, []);
+  }, [days]);
 
   const focusDay = useMemo(() => days.find((d) => d.date === focusDate), [days, focusDate]);
   const totalCost = useMemo(
@@ -49,10 +50,10 @@ export function OverviewClient({ days, generatedAt }: Props): React.JSX.Element 
       {/* Mobile header(定稿不動) */}
       <Box className="only-mobile" px="20px" pt="24px" pb="14px">
         <Box fontFamily="pixel" fontSize="8px" letterSpacing="0.06em" color="pixel.faint">
-          {TRIP_EYEBROW}
+          {eyebrow}
         </Box>
         <Box fontSize="24px" fontWeight="700" letterSpacing="0.02em" mt="10px">
-          {TRIP_TITLE}
+          {title}
         </Box>
       </Box>
       {/* Desktop header(D1:標題 + TODAY tag;trip 標題已在 sidebar) */}
