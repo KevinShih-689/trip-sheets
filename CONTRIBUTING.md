@@ -10,7 +10,7 @@ Thanks for your interest in improving Trip Sheets! This is a small, deliberately
 
 ## Prerequisites
 
-- **Node ≥ 22** (CI and deploy run on Node 22; the toolchain — Vite/Vitest — requires it)
+- **Node ≥ 22** — run `nvm use` (or `fnm use`) to pick up the pinned version from `.nvmrc` (CI and deploy run on Node 22; the toolchain — Vite/Vitest — requires it)
 - **pnpm 9** (`corepack enable` or `npm i -g pnpm@9`)
 
 ## Getting started

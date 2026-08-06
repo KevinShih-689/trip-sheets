@@ -20,15 +20,17 @@ Edit your trip in a spreadsheet (from your phone or laptop), push a button, and 
 
 ## Tech Stack
 
-| Layer      | Choice                                       |
-| ---------- | -------------------------------------------- |
-| Framework  | Next.js 15 (App Router, `output: 'export'`)  |
-| Language   | TypeScript 5.7 (strict), no `any`            |
-| UI         | Chakra UI v3 + Emotion 11                    |
+| Layer      | Choice                                           |
+| ---------- | ------------------------------------------------ |
+| Framework  | Next.js 15 (App Router, `output: 'export'`)      |
+| Language   | TypeScript 5.7 (strict), no `any`                |
+| UI         | Chakra UI v3 + Emotion 11                        |
 | Data fetch | `googleapis` 144 (Sheets API, read-only) + Zod 3 |
-| Testing    | Vitest 3 (data-boundary unit tests)          |
-| Runtime    | Node 22 (`.nvmrc`), pnpm 9                   |
-| CI/CD      | GitHub Actions → GitHub Pages                |
+| Testing    | Vitest 3 (data-boundary unit tests)              |
+| Runtime    | Node 22 (`.nvmrc`), pnpm 9                       |
+| CI/CD      | GitHub Actions → GitHub Pages                    |
+
+> Versions track `package.json` — `engines.node` (`>=22`) is the single source of truth for Node; `.nvmrc` and this table follow it.
 
 ## Project Structure
 
