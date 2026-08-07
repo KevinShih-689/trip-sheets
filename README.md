@@ -6,6 +6,15 @@ Edit your trip in a spreadsheet (from your phone or laptop), push a button, and 
 
 ---
 
+<table>
+  <tr>
+    <td><img src="./doc/images/main_page.png" alt="Main page" width="200" /></td>
+    <td><img src="./doc/images/mobile_homepage.png" alt="Mobile homepage" width="200" /></td>
+    <td><img src="./doc/images/day-page.png" alt="Day page" width="200" /></td>
+    <td><img src="./doc/images/pre-page.png" alt="Pre page" width="200" /></td>
+  </tr>
+</table>
+
 ## Features
 
 - **Sheets is the only data store** — no self-hosted DB, no editing UI to build. Edit on the Google Sheets mobile app.
@@ -149,17 +158,17 @@ Open http://localhost:3000.
 
 ### Scripts
 
-| Command                   | Description                                               |
-| ------------------------- | --------------------------------------------------------- |
+| Command                   | Description                                                             |
+| ------------------------- | ----------------------------------------------------------------------- |
 | `pnpm fetch-sheet`        | Enumerate date tabs + Backlog, validate, filter, write `trip-data.json` |
-| `pnpm fetch-sheet:sample` | Use the committed sample data instead of a live sheet     |
-| `pnpm dev`                | Start the Next.js dev server                              |
-| `pnpm build`              | Static export to `out/`                                   |
-| `pnpm lint`               | ESLint (Next config)                                      |
-| `pnpm type-check`         | `tsc --noEmit`                                            |
-| `pnpm test`               | Run Vitest unit tests (data boundary)                     |
-| `pnpm test:watch`         | Vitest in watch mode                                      |
-| `pnpm test:coverage`      | Vitest with a coverage report                             |
+| `pnpm fetch-sheet:sample` | Use the committed sample data instead of a live sheet                   |
+| `pnpm dev`                | Start the Next.js dev server                                            |
+| `pnpm build`              | Static export to `out/`                                                 |
+| `pnpm lint`               | ESLint (Next config)                                                    |
+| `pnpm type-check`         | `tsc --noEmit`                                                          |
+| `pnpm test`               | Run Vitest unit tests (data boundary)                                   |
+| `pnpm test:watch`         | Vitest in watch mode                                                    |
+| `pnpm test:coverage`      | Vitest with a coverage report                                           |
 
 ---
 
