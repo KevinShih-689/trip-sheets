@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="doc/images/logo.png" alt="Trip Sheets logo" width="128" />
+
 # Trip Sheets
 
 <img src="https://img.shields.io/github/last-commit/KevinShih-689/trip-sheets?style=flat-square&color=2E86C1" alt="last commit" />
