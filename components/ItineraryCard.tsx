@@ -1,29 +1,44 @@
 'use client';
 
 import { Box, Flex } from '@chakra-ui/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Tag, statusVariant } from './Tag';
 import { formatYen } from '@/lib/format';
 import type { ItineraryItem } from '@/lib/types';
 
-/** 行程列:mobile 點擊展開;desktop(≥1024)詳細常駐展開(CSS .icard-detail 控制) */
+/** 行程列:mobile 點擊展開;desktop(≥1024)詳細常駐展開,header 不呈現為可點按 */
 export function ItineraryCard({ item }: { item: ItineraryItem }): React.JSX.Element {
   const [open, setOpen] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
   const needsAttention = item.reservationStatus === '待預約' || item.reservationStatus === '候補中';
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(min-width: 1024px)');
+    setIsDesktop(mediaQuery.matches);
+    const handleChange = (event: MediaQueryListEvent) => {
+      setIsDesktop(event.matches);
+    };
+    mediaQuery.addEventListener('change', handleChange);
+    return () => {
+      mediaQuery.removeEventListener('change', handleChange);
+    };
+  }, []);
+
+  const interactive = !isDesktop;
 
   return (
     <Box>
       <Flex
-        as="button"
+        as={interactive ? 'button' : 'div'}
         w="100%"
         textAlign="left"
         gap="14px"
         px="20px"
         py="13px"
         minH="44px"
-        cursor="pointer"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
+        cursor={interactive ? 'pointer' : undefined}
+        onClick={interactive ? () => setOpen((v) => !v) : undefined}
+        aria-expanded={interactive ? open : undefined}
       >
         <Box fontFamily="mono" fontSize="12px" lineHeight="1.5" fontWeight="500" color="pixel.yellow" w="46px" flexShrink={0}>
           {item.timeSlot}
