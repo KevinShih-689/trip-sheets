@@ -1,10 +1,67 @@
+<div align="center">
+
 # Trip Sheets
+
+<img src="https://img.shields.io/github/last-commit/KevinShih-689/trip-sheets?style=flat-square&color=2E86C1" alt="last commit" />
+<img src="https://img.shields.io/github/languages/top/KevinShih-689/trip-sheets?style=flat-square&color=2E86C1" alt="top language" />
+<img src="https://img.shields.io/github/languages/count/KevinShih-689/trip-sheets?style=flat-square&color=2E86C1" alt="languages count" />
+<img src="https://img.shields.io/github/license/KevinShih-689/trip-sheets?style=flat-square&color=2E86C1" alt="license" />
+
+<br />
+<br />
+
+_Built with the tools and technologies:_
+
+<br />
+
+<img src="https://img.shields.io/badge/Next.js-000000?style=flat-square&logo=nextdotjs&logoColor=white" alt="Next.js" />
+<img src="https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB" alt="React" />
+<img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
+<img src="https://img.shields.io/badge/Node.js-5FA04E?style=flat-square&logo=nodedotjs&logoColor=white" alt="Node.js" />
+<img src="https://img.shields.io/badge/pnpm-F69220?style=flat-square&logo=pnpm&logoColor=white" alt="pnpm" />
+
+<br />
+
+<img src="https://img.shields.io/badge/Chakra_UI-319795?style=flat-square&logo=chakraui&logoColor=white" alt="Chakra UI" />
+<img src="https://img.shields.io/badge/Google_Sheets-34A853?style=flat-square&logo=googlesheets&logoColor=white" alt="Google Sheets API" />
+<img src="https://img.shields.io/badge/Zod-3E67B1?style=flat-square&logo=zod&logoColor=white" alt="Zod" />
+<img src="https://img.shields.io/badge/PWA-5A0FC8?style=flat-square&logo=pwa&logoColor=white" alt="PWA" />
+
+<br />
+
+<img src="https://img.shields.io/badge/Vitest-6E9F18?style=flat-square&logo=vitest&logoColor=white" alt="Vitest" />
+<img src="https://img.shields.io/badge/ESLint-4B32C3?style=flat-square&logo=eslint&logoColor=white" alt="ESLint" />
+<img src="https://img.shields.io/badge/GitHub_Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white" alt="GitHub Actions" />
+<img src="https://img.shields.io/badge/GitHub_Pages-222222?style=flat-square&logo=githubpages&logoColor=white" alt="GitHub Pages" />
+
+</div>
+
+<br />
+<br />
 
 > A mobile-first, offline-capable travel itinerary site that treats **Google Sheets as the only source of truth** and ships as a static PWA on GitHub Pages.
 
 Edit your trip in a spreadsheet (from your phone or laptop), push a button, and a fast static website rebuilds itself — no database, no backend, no login. Built for a Japan trip (2026/12/14–12/19), but designed to be reused as a template for any trip.
 
 ---
+
+### Mobile
+
+<table align="center">
+  <tr>
+    <td align="center"><img src="./doc/images/mobile_homepage.png" alt="Mobile homepage" width="60" /></td>
+  </tr>
+</table>
+
+### Desktop
+
+<table align="center">
+  <tr>
+    <td align="center"><img src="./doc/images/main_page.png" alt="Overview" width="280" /></td>
+    <td align="center"><img src="./doc/images/day-page.png" alt="Day page" width="280" /></td>
+    <td align="center"><img src="./doc/images/pre-page.png" alt="Pre-trip page" width="280" /></td>
+  </tr>
+</table>
 
 ## Features
 
@@ -149,17 +206,17 @@ Open http://localhost:3000.
 
 ### Scripts
 
-| Command                   | Description                                               |
-| ------------------------- | --------------------------------------------------------- |
+| Command                   | Description                                                             |
+| ------------------------- | ----------------------------------------------------------------------- |
 | `pnpm fetch-sheet`        | Enumerate date tabs + Backlog, validate, filter, write `trip-data.json` |
-| `pnpm fetch-sheet:sample` | Use the committed sample data instead of a live sheet     |
-| `pnpm dev`                | Start the Next.js dev server                              |
-| `pnpm build`              | Static export to `out/`                                   |
-| `pnpm lint`               | ESLint (Next config)                                      |
-| `pnpm type-check`         | `tsc --noEmit`                                            |
-| `pnpm test`               | Run Vitest unit tests (data boundary)                     |
-| `pnpm test:watch`         | Vitest in watch mode                                      |
-| `pnpm test:coverage`      | Vitest with a coverage report                             |
+| `pnpm fetch-sheet:sample` | Use the committed sample data instead of a live sheet                   |
+| `pnpm dev`                | Start the Next.js dev server                                            |
+| `pnpm build`              | Static export to `out/`                                                 |
+| `pnpm lint`               | ESLint (Next config)                                                    |
+| `pnpm type-check`         | `tsc --noEmit`                                                          |
+| `pnpm test`               | Run Vitest unit tests (data boundary)                                   |
+| `pnpm test:watch`         | Vitest in watch mode                                                    |
+| `pnpm test:coverage`      | Vitest with a coverage report                                           |
 
 ---
 
