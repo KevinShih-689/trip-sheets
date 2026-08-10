@@ -271,6 +271,16 @@ sequenceDiagram
 
 Issues and PRs are welcome. See the issue templates and PR checklist under [`.github/`](.github/). In short: use `pnpm fetch-sheet:sample` for local work, make sure `pnpm lint`, `pnpm type-check`, and `pnpm build` pass, and never commit secrets, real PNRs / booking numbers, or personal data.
 
+## Contributors
+
+Thanks to everyone who has contributed to this project ✨
+
+<a href="https://github.com/KevinShih-689/trip-sheets/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=KevinShih-689/trip-sheets" alt="Contributors" />
+</a>
+
+<sub>Contributor image generated with <a href="https://contrib.rocks">contrib.rocks</a>.</sub>
+
 ## License
 
 [MIT](LICENSE) © Kevin Shih
