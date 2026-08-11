@@ -490,18 +490,50 @@ a:hover {
     min-height: 360px;
   }
 
-  /* 每日:timeline + 右側摘要欄 */
+  /* 每日:timeline + 右側摘要欄。
+     整頁鎖在一個視口高度內,垂直捲動只發生在行程清單裡,
+     右側摘要欄與「當日預估花費」永遠留在畫面上。 */
+  .day-root {
+    height: 100dvh;
+    overflow: hidden;
+  }
   .day-grid {
     display: grid;
     grid-template-columns: 1fr 300px;
     gap: 20px;
     padding: 0 28px 24px;
     align-items: start;
+    flex: 1;
+    min-height: 0;
+  }
+  /* align-self 需蓋掉 .panel-desktop 的 start,才能撐滿列高供內層捲動 */
+  .day-timeline {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .day-timeline-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+  .day-timeline-foot {
+    flex: none;
   }
   .day-rail {
     display: flex;
     flex-direction: column;
     gap: 16px;
+    align-self: stretch;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+  /* 摘要欄自身捲動時,面板(尤其固定高度的迷你地圖)不可被壓縮 */
+  .day-rail > * {
+    flex: none;
   }
   .icard-detail {
     display: block;

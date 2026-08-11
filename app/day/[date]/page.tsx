@@ -36,7 +36,11 @@ export default async function DayPage({
   const subtotal = dayCostSum(day.items.map((i) => i.estimatedCostJpy));
 
   return (
-    <Flex direction="column" minH="calc(100dvh - var(--tabbar-h))">
+    <Flex
+      className="day-root"
+      direction="column"
+      minH="calc(100dvh - var(--tabbar-h))"
+    >
       <Box px={{ base: "20px", lg: "28px" }} pt="24px" pb="16px">
         <Flex align="baseline" gap="12px">
           <Box fontFamily="mono" fontSize="28px" fontWeight="600">
@@ -74,20 +78,23 @@ export default async function DayPage({
         />
       ) : (
         <div className="day-grid">
-          <Box className="panel-desktop" flex="1">
-            {day.items.map((item, i) => (
-              <Box key={`${item.timeSlot}-${item.name}`}>
-                {i > 0 && (
-                  <Box
-                    borderTopWidth="1px"
-                    borderColor="pixel.line"
-                    mx="20px"
-                  />
-                )}
-                <ItineraryCard item={item} />
-              </Box>
-            ))}
+          <Box className="panel-desktop day-timeline" flex="1">
+            <Box className="day-timeline-list">
+              {day.items.map((item, i) => (
+                <Box key={`${item.timeSlot}-${item.name}`}>
+                  {i > 0 && (
+                    <Box
+                      borderTopWidth="1px"
+                      borderColor="pixel.line"
+                      mx="20px"
+                    />
+                  )}
+                  <ItineraryCard item={item} />
+                </Box>
+              ))}
+            </Box>
             <Flex
+              className="day-timeline-foot"
               borderTopWidth="1px"
               borderColor="pixel.line"
               px="20px"
