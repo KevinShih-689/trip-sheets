@@ -8,6 +8,8 @@ next-env.d.ts
 # test coverage
 coverage/
 
+graphify-out/
+
 # data:trip-data.json 由 CI 以 Sheets API 產生,不進版控(sample 除外)
 data/trip-data.json
 
