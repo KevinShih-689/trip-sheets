@@ -359,12 +359,61 @@ a:hover {
   overflow-y: auto;
 }
 
-/* 行程卡片:mobile 點擊展開;desktop 常駐展開 */
+/* 行程卡片:mobile 點擊展開;desktop 常駐展開。
+   展開動畫用 grid-template-rows 0fr→1fr,不需 JS 量 scrollHeight,也不會有 max-height 猜值的延遲感。
+   收合時用 visibility: hidden 讓內容退出 tab order / 無障礙樹(等同原本 display: none 的行為)。 */
 .icard-detail {
-  display: none;
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    grid-template-rows 220ms cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 160ms ease,
+    visibility 220ms;
 }
 .icard-detail.open {
-  display: block;
+  grid-template-rows: 1fr;
+  opacity: 1;
+  visibility: visible;
+}
+.icard-detail-body {
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* 展開指示器:兩條 bar 組成,直的那條旋轉成橫的,+ 平滑變 − */
+.icard-toggle {
+  position: relative;
+  width: 12px;
+  height: 12px;
+  flex: none;
+}
+.icard-toggle::before,
+.icard-toggle::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 2px;
+  margin-top: -1px;
+  background: currentColor;
+  transition: transform 220ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.icard-toggle::after {
+  transform: rotate(90deg);
+}
+.icard-toggle.open::after {
+  transform: rotate(0deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .icard-detail,
+  .icard-toggle::before,
+  .icard-toggle::after {
+    transition: none;
+  }
 }
 
 @media (min-width: 1024px) {
@@ -490,21 +539,57 @@ a:hover {
     min-height: 360px;
   }
 
-  /* 每日:timeline + 右側摘要欄 */
+  /* 每日:timeline + 右側摘要欄。
+     整頁鎖在一個視口高度內,垂直捲動只發生在行程清單裡,
+     右側摘要欄與「當日預估花費」永遠留在畫面上。 */
+  .day-root {
+    height: 100dvh;
+    overflow: hidden;
+  }
   .day-grid {
     display: grid;
     grid-template-columns: 1fr 300px;
     gap: 20px;
     padding: 0 28px 24px;
     align-items: start;
+    flex: 1;
+    min-height: 0;
+  }
+  /* align-self 需蓋掉 .panel-desktop 的 start,才能撐滿列高供內層捲動 */
+  .day-timeline {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .day-timeline-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+  .day-timeline-foot {
+    flex: none;
   }
   .day-rail {
     display: flex;
     flex-direction: column;
     gap: 16px;
+    align-self: stretch;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: thin;
   }
+  /* 摘要欄自身捲動時,面板(尤其固定高度的迷你地圖)不可被壓縮 */
+  .day-rail > * {
+    flex: none;
+  }
+  /* desktop 詳細常駐展開,不套用 mobile 的展開動畫 */
   .icard-detail {
     display: block;
+    opacity: 1;
+    visibility: visible;
+    transition: none;
   }
 
   /* 行前:機票|USJ 兩欄,住宿/民宿整寬水平擴展 */

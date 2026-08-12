@@ -1,30 +1,22 @@
 'use client';
 
 import { Box, Flex } from '@chakra-ui/react';
-import { useEffect, useState } from 'react';
 import { Tag, statusVariant } from './Tag';
 import { formatYen } from '@/lib/format';
 import type { ItineraryItem } from '@/lib/types';
 
+interface ItineraryCardProps {
+  item: ItineraryItem;
+  /** 是否展開;由 ItineraryList 統一控管,確保一次只開一筆 */
+  open: boolean;
+  /** mobile 才可點擊展開;desktop 詳細常駐展開,header 不呈現為可點按 */
+  interactive: boolean;
+  onToggle: () => void;
+}
+
 /** 行程列:mobile 點擊展開;desktop(≥1024)詳細常駐展開,header 不呈現為可點按 */
-export function ItineraryCard({ item }: { item: ItineraryItem }): React.JSX.Element {
-  const [open, setOpen] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(false);
+export function ItineraryCard({ item, open, interactive, onToggle }: ItineraryCardProps): React.JSX.Element {
   const needsAttention = item.reservationStatus === '待預約' || item.reservationStatus === '候補中';
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(min-width: 1024px)');
-    setIsDesktop(mediaQuery.matches);
-    const handleChange = (event: MediaQueryListEvent) => {
-      setIsDesktop(event.matches);
-    };
-    mediaQuery.addEventListener('change', handleChange);
-    return () => {
-      mediaQuery.removeEventListener('change', handleChange);
-    };
-  }, []);
-
-  const interactive = !isDesktop;
 
   return (
     <Box>
@@ -37,7 +29,7 @@ export function ItineraryCard({ item }: { item: ItineraryItem }): React.JSX.Elem
         py="13px"
         minH="44px"
         cursor={interactive ? 'pointer' : undefined}
-        onClick={interactive ? () => setOpen((v) => !v) : undefined}
+        onClick={interactive ? onToggle : undefined}
         aria-expanded={interactive ? open : undefined}
       >
         <Box fontFamily="mono" fontSize="12px" lineHeight="1.5" fontWeight="500" color="pixel.yellow" w="46px" flexShrink={0}>
@@ -60,54 +52,61 @@ export function ItineraryCard({ item }: { item: ItineraryItem }): React.JSX.Elem
             {formatYen(item.estimatedCostJpy)}
           </Box>
         ) : (
-          <Box className="only-mobile" fontSize="16px" lineHeight="1" color="pixel.faint" alignSelf="center">
-            {open ? '−' : '+'}
-          </Box>
+          <Box
+            className={open ? 'only-mobile icard-toggle open' : 'only-mobile icard-toggle'}
+            color="pixel.faint"
+            alignSelf="center"
+            aria-hidden="true"
+          />
         )}
       </Flex>
 
-      <Box
-        className={open ? 'icard-detail open' : 'icard-detail'}
-        bg="pixel.surface"
-        borderWidth="1px"
-        borderColor="pixel.line"
-        borderRadius="10px"
-        mx="16px"
-        mb="10px"
-        mt="-4px"
-        px="16px"
-        py="14px"
-      >
-        <DetailRow label="交通">{item.transport || '-'}</DetailRow>
-        <DetailRow label="營業">{item.openingHours || '-'}</DetailRow>
-        <DetailRow label="費用">
-          {item.estimatedCostJpy !== null ? (
-            <Box as="span" fontFamily="mono" color="pixel.yellow">
-              {formatYen(item.estimatedCostJpy)}
-            </Box>
-          ) : (
-            '-'
-          )}
-        </DetailRow>
-        <DetailRow label="預約">
-          {item.reservationStatus ? <Tag variant={statusVariant(item.reservationStatus)}>{item.reservationStatus}</Tag> : '-'}
-        </DetailRow>
-        {item.note && (
-          <DetailRow label="備註">
-            <Box as="span" color="pixel.dim">
-              {item.note}
-            </Box>
-          </DetailRow>
-        )}
-        <DetailRow label="地圖">
-          <a
-            href={item.link ?? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${item.name} ${item.area}`)}`}
-            target="_blank"
-            rel="noreferrer"
+      {/* 三層結構是展開動畫的必要條件:外層只負責 grid-template-rows 0fr→1fr 過場,
+          中層 overflow: hidden 做裁切,內層才帶面板外觀(否則收合時 padding/border 會留殘影) */}
+      <Box className={open ? 'icard-detail open' : 'icard-detail'}>
+        <Box className="icard-detail-body">
+          <Box
+            bg="pixel.surface"
+            borderWidth="1px"
+            borderColor="pixel.line"
+            borderRadius="10px"
+            mx="16px"
+            mb="13px"
+            px="16px"
+            py="14px"
           >
-            Google Maps ↗
-          </a>
-        </DetailRow>
+            <DetailRow label="交通">{item.transport || '-'}</DetailRow>
+            <DetailRow label="營業">{item.openingHours || '-'}</DetailRow>
+            <DetailRow label="費用">
+              {item.estimatedCostJpy !== null ? (
+                <Box as="span" fontFamily="mono" color="pixel.yellow">
+                  {formatYen(item.estimatedCostJpy)}
+                </Box>
+              ) : (
+                '-'
+              )}
+            </DetailRow>
+            <DetailRow label="預約">
+              {item.reservationStatus ? <Tag variant={statusVariant(item.reservationStatus)}>{item.reservationStatus}</Tag> : '-'}
+            </DetailRow>
+            {item.note && (
+              <DetailRow label="備註">
+                <Box as="span" color="pixel.dim">
+                  {item.note}
+                </Box>
+              </DetailRow>
+            )}
+            <DetailRow label="地圖">
+              <a
+                href={item.link ?? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${item.name} ${item.area}`)}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Google Maps ↗
+              </a>
+            </DetailRow>
+          </Box>
+        </Box>
       </Box>
     </Box>
   );
