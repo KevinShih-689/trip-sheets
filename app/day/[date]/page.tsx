@@ -1,7 +1,7 @@
 import { Box, Flex } from "@chakra-ui/react";
 import { notFound } from "next/navigation";
 import { EmptyState } from "@/components/EmptyState";
-import { ItineraryCard } from "@/components/ItineraryCard";
+import { ItineraryList } from "@/components/ItineraryList";
 import { MapEmbed } from "@/components/MapEmbed";
 import { Tag } from "@/components/Tag";
 import { dayCostSum, formatYen, shortDate } from "@/lib/format";
@@ -79,20 +79,7 @@ export default async function DayPage({
       ) : (
         <div className="day-grid">
           <Box className="panel-desktop day-timeline" flex="1">
-            <Box className="day-timeline-list">
-              {day.items.map((item, i) => (
-                <Box key={`${item.timeSlot}-${item.name}`}>
-                  {i > 0 && (
-                    <Box
-                      borderTopWidth="1px"
-                      borderColor="pixel.line"
-                      mx="20px"
-                    />
-                  )}
-                  <ItineraryCard item={item} />
-                </Box>
-              ))}
-            </Box>
+            <ItineraryList items={day.items} />
             <Flex
               className="day-timeline-foot"
               borderTopWidth="1px"
