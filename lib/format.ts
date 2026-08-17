@@ -11,6 +11,11 @@ export function shortDate(isoDate: string): string {
   return `${Number(isoDate.slice(5, 7))}.${Number(isoDate.slice(8))}`;
 }
 
+/** 推薦店家與搜尋中心的距離,如 `1.2km`(spec §4.4) */
+export function formatDistanceKm(km: number): string {
+  return `${km.toFixed(1)}km`;
+}
+
 export function formatGeneratedAt(iso: string): string {
   const d = new Date(iso);
   const pad = (n: number): string => String(n).padStart(2, '0');
