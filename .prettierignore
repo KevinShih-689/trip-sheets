@@ -10,6 +10,9 @@ tsconfig.tsbuildinfo
 data/trip-data.json
 data/stores.json
 
+# 手寫文件:規格、SOP、筆記,排版由作者決定,不受 Prettier 管
+doc/
+
 # 工具產物
 graphify-out/
 public/sw.js
