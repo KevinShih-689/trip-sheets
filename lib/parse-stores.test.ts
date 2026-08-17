@@ -1,0 +1,200 @@
+import { describe, expect, it } from 'vitest';
+import {
+  SheetSchemaError,
+  buildStoresFile,
+  parseStoreRows,
+  storeCacheKey,
+  storeSearchQuery,
+  type PlaceResult,
+  type Row,
+} from './parse-stores';
+
+const HEADER_ZH: Row = ['店名', '備註', 'Maps URL', '地址', '地址覆寫'];
+const HEADER_TAKEOUT: Row = ['Title', 'Note', 'URL', 'Address'];
+
+function place(overrides: Partial<PlaceResult> = {}): PlaceResult {
+  return {
+    displayName: '一蘭 難波店',
+    formattedAddress: '大阪市中央区難波1-1-1',
+    lat: 34.665,
+    lng: 135.501,
+    types: ['restaurant', 'food'],
+    mapsUri: 'https://maps.google.com/?cid=1',
+    ...overrides,
+  };
+}
+
+describe('parseStoreRows — 以表頭辨識欄位', () => {
+  it('parses rows using the Chinese header row', () => {
+    const rows: Row[] = [
+      HEADER_ZH,
+      ['一蘭 難波店', '要排隊', 'https://maps.app.goo.gl/a', '難波1-1-1', ''],
+    ];
+    expect(parseStoreRows('店家清單', rows)).toEqual([
+      {
+        name: '一蘭 難波店',
+        note: '要排隊',
+        mapsUrl: 'https://maps.app.goo.gl/a',
+        address: '難波1-1-1',
+        addressOverride: '',
+      },
+    ]);
+  });
+
+  it('accepts the raw Takeout CSV header row (English, no override column)', () => {
+    const rows: Row[] = [HEADER_TAKEOUT, ['Ichiran', 'queue', 'https://x', 'Namba 1-1-1']];
+    expect(parseStoreRows('店家清單', rows)).toEqual([
+      {
+        name: 'Ichiran',
+        note: 'queue',
+        mapsUrl: 'https://x',
+        address: 'Namba 1-1-1',
+        addressOverride: '',
+      },
+    ]);
+  });
+
+  it('tolerates reordered columns', () => {
+    const rows: Row[] = [
+      ['地址', '店名', '備註'],
+      ['難波1-1-1', '一蘭', '要排隊'],
+    ];
+    expect(parseStoreRows('店家清單', rows)[0]).toMatchObject({
+      name: '一蘭',
+      address: '難波1-1-1',
+    });
+  });
+
+  it('trims cells and skips blank / nameless rows', () => {
+    const rows: Row[] = [
+      HEADER_ZH,
+      ['  一蘭  ', '', '', '', ''],
+      [],
+      ['', '沒有店名', '', '', ''],
+      ['大阪王將', '', '', '', ''],
+    ];
+    const parsed = parseStoreRows('店家清單', rows);
+    expect(parsed.map((r) => r.name)).toEqual(['一蘭', '大阪王將']);
+  });
+
+  it('throws a readable SheetSchemaError when the name column is missing', () => {
+    const rows: Row[] = [
+      ['備註', '地址'],
+      ['x', 'y'],
+    ];
+    expect(() => parseStoreRows('店家清單', rows)).toThrow(SheetSchemaError);
+    try {
+      parseStoreRows('店家清單', rows);
+    } catch (err) {
+      const message = (err as Error).message;
+      expect(message).toContain('店家清單');
+      expect(message).toContain('店名');
+      expect(message).toContain('備註');
+    }
+  });
+
+  it('throws when the tab is empty', () => {
+    expect(() => parseStoreRows('店家清單', [])).toThrow(SheetSchemaError);
+  });
+});
+
+describe('storeSearchQuery — Text Search 查詢字串', () => {
+  it('combines name with the address', () => {
+    const row = { name: '一蘭', note: '', mapsUrl: '', address: '難波1-1-1', addressOverride: '' };
+    expect(storeSearchQuery(row)).toBe('一蘭 難波1-1-1');
+  });
+
+  it('prefers the manual address override', () => {
+    const row = {
+      name: '一蘭',
+      note: '',
+      mapsUrl: '',
+      address: '錯的地址',
+      addressOverride: '對的地址',
+    };
+    expect(storeSearchQuery(row)).toBe('一蘭 對的地址');
+  });
+
+  it('falls back to the name alone when no address is known', () => {
+    const row = { name: '一蘭', note: '', mapsUrl: '', address: '', addressOverride: '' };
+    expect(storeSearchQuery(row)).toBe('一蘭');
+  });
+});
+
+describe('storeCacheKey', () => {
+  it('uses the Maps URL when present', () => {
+    const row = {
+      name: '一蘭',
+      note: '',
+      mapsUrl: 'https://maps.app.goo.gl/a',
+      address: 'x',
+      addressOverride: '',
+    };
+    expect(storeCacheKey(row)).toBe('https://maps.app.goo.gl/a');
+  });
+
+  it('falls back to name + address so URL-less rows still cache', () => {
+    const row = { name: '一蘭', note: '', mapsUrl: '', address: '難波1-1-1', addressOverride: '' };
+    expect(storeCacheKey(row)).toBe('一蘭|難波1-1-1');
+  });
+
+  it('changes when the address override changes, so a correction re-queries', () => {
+    const base = {
+      name: '一蘭',
+      note: '',
+      mapsUrl: 'https://x',
+      address: 'a',
+      addressOverride: '',
+    };
+    expect(storeCacheKey({ ...base, addressOverride: '修正後' })).not.toBe(storeCacheKey(base));
+  });
+});
+
+describe('buildStoresFile', () => {
+  const rows = parseStoreRows('店家清單', [
+    HEADER_ZH,
+    ['一蘭 難波店', '要排隊', 'https://maps.app.goo.gl/a', '難波1-1-1', ''],
+    ['查不到的店', '', 'https://maps.app.goo.gl/b', '', ''],
+  ]);
+
+  it('merges sheet notes with resolved place data and reports unresolved rows', () => {
+    const resolved = new Map<string, PlaceResult>([['https://maps.app.goo.gl/a', place()]]);
+    const { file, unresolved } = buildStoresFile({
+      rows,
+      resolved,
+      areaCenters: { 難波: { lat: 34.66, lng: 135.5 } },
+      generatedAt: '2026-08-12T00:00:00.000Z',
+    });
+
+    expect(file.stores).toEqual([
+      {
+        name: '一蘭 難波店',
+        note: '要排隊',
+        address: '大阪市中央区難波1-1-1',
+        lat: 34.665,
+        lng: 135.501,
+        types: ['restaurant', 'food'],
+        mapsUri: 'https://maps.google.com/?cid=1',
+      },
+    ]);
+    expect(file.areaCenters).toEqual({ 難波: { lat: 34.66, lng: 135.5 } });
+    expect(unresolved).toEqual(['查不到的店']);
+  });
+
+  it('keeps the sheet name when the place has no display name', () => {
+    const resolved = new Map<string, PlaceResult>([
+      ['https://maps.app.goo.gl/a', place({ displayName: '' })],
+    ]);
+    const { file } = buildStoresFile({ rows, resolved, areaCenters: {}, generatedAt: 'now' });
+    expect(file.stores[0]?.name).toBe('一蘭 難波店');
+  });
+
+  it('throws SheetSchemaError when a resolved place fails schema validation', () => {
+    const resolved = new Map<string, PlaceResult>([
+      ['https://maps.app.goo.gl/a', place({ lat: Number.NaN })],
+    ]);
+    expect(() => buildStoresFile({ rows, resolved, areaCenters: {}, generatedAt: 'now' })).toThrow(
+      SheetSchemaError,
+    );
+  });
+});

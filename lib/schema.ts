@@ -93,6 +93,32 @@ export const bnbCandidateSchema = z.object({
   note: z.string(),
 });
 
+export const latLngSchema = z.object({
+  lat: z.number().finite(),
+  lng: z.number().finite(),
+});
+
+/** 推薦店家(來源:收藏清單 + Places 反查),見 doc/spec_suggest_store_page.md §2.3 */
+export const storeSchema = z.object({
+  name: z.string().min(1),
+  note: z.string(),
+  address: z.string(),
+  lat: z.number().finite(),
+  lng: z.number().finite(),
+  types: z.array(z.string()),
+  mapsUri: z.string(),
+});
+
+/**
+ * data/stores.json。`areaCenters` 以區域名(各日 B2)為 key,
+ * 刻意與 trip-data.json 分離:兩條 pipeline 各自只寫自己的檔案。
+ */
+export const storesFileSchema = z.object({
+  generatedAt: z.string(),
+  stores: z.array(storeSchema),
+  areaCenters: z.record(z.string(), latLngSchema),
+});
+
 export const tripMetaSchema = z.object({
   title: z.string().min(1),
   eyebrow: z.string(),

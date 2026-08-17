@@ -1,9 +1,9 @@
 name: Deploy to GitHub Pages
 
 on:
-  workflow_dispatch: {}          # GitHub 手機 App 手動 rebuild(主要更新路徑)
+  workflow_dispatch: {} # GitHub 手機 App 手動 rebuild(主要更新路徑)
   schedule:
-    - cron: '0 21 * * *'         # 每日 UTC 21:00 = 台灣 05:00 自動兜底
+    - cron: '0 21 * * *' # 每日 UTC 21:00 = 台灣 05:00 自動兜底
   push:
     branches: [main]
 
@@ -44,6 +44,25 @@ jobs:
           GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
           SHEET_ID: ${{ secrets.SHEET_ID }}
         run: pnpm fetch-sheet
+
+      # Places/Geocoding 反查結果的快取:只有新增或修改過的店家才會真的打 API。
+      # 快取遺失只會讓這次 build 全量重查(仍在免費額度內),不影響正確性。
+      - name: Restore store lookup cache
+        uses: actions/cache@v4
+        with:
+          path: .cache
+          key: stores-cache-${{ github.run_id }}
+          restore-keys: stores-cache-
+
+      - name: Fetch store suggestions
+        env:
+          GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+          SHEET_ID: ${{ secrets.SHEET_ID }}
+          GMAPS_SERVER_KEY: ${{ secrets.GMAPS_SERVER_KEY }}
+        run: pnpm fetch-stores
+
+      - name: Format check
+        run: pnpm format:check
 
       - name: Lint & type-check
         run: pnpm lint && pnpm type-check
