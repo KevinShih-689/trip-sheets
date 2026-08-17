@@ -3,7 +3,10 @@ name: Deploy to GitHub Pages
 on:
   workflow_dispatch: {} # GitHub 手機 App 手動 rebuild(主要更新路徑)
   schedule:
-    - cron: '0 21 * * *' # 每日 UTC 21:00 = 台灣 05:00 自動兜底
+    # 每週日 UTC 21:00 = 台灣週一 05:00 自動兜底。
+    # 排程只是兜底,Sheet 改完要立刻上線請用 workflow_dispatch 手動觸發。
+    # 頻率壓到每週也讓 fetch-stores 的 API 用量遠離免費額度上限(每月僅 4–5 次)。
+    - cron: '0 21 * * 0'
   push:
     branches: [main]
 
