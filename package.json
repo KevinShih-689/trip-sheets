@@ -41,6 +41,7 @@
     "fetch-sheet": "tsx scripts/fetch-sheet.ts",
     "fetch-sheet:sample": "node -e \"require('fs').copyFileSync('data/trip-data.sample.json','data/trip-data.json');console.log('sample data -> data/trip-data.json')\"",
     "fetch-stores": "tsx scripts/fetch-stores.ts",
+    "fetch-stores:check": "tsx scripts/fetch-stores.ts --dry-run",
     "fetch-stores:sample": "node -e \"require('fs').copyFileSync('data/stores.sample.json','data/stores.json');console.log('sample data -> data/stores.json')\"",
     "dev": "next dev",
     "build": "next build",

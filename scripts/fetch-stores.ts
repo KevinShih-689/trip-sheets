@@ -7,7 +7,7 @@
  * 需要環境變數 GOOGLE_SERVICE_ACCOUNT_KEY(JSON 字串)、SHEET_ID、GMAPS_SERVER_KEY。
  * GMAPS_SERVER_KEY 只在 CI 使用,永不進入前端 bundle(不加 NEXT_PUBLIC_ 前綴)。
  */
-import { mkdirSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { appendFileSync, mkdirSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { google } from 'googleapis';
 import { z } from 'zod';
@@ -16,8 +16,10 @@ import {
   SheetSchemaError,
   buildStoresFile,
   parseStoreRows,
+  planCalls,
   storeCacheKey,
   storeSearchQuery,
+  type CallPlan,
   type PlaceResult,
   type Row,
   type StoreRow,
@@ -27,6 +29,13 @@ import type { LatLng } from '../lib/types';
 const CACHE_PATH = join(process.cwd(), '.cache', 'stores-cache.json');
 const TRIP_DATA_PATH = join(process.cwd(), 'data', 'trip-data.json');
 const OUT_PATH = join(process.cwd(), 'data', 'stores.json');
+
+/**
+ * 單次執行允許的 Places 呼叫上限,超過即中止。預設值對齊建議的 GCP 每日配額
+ * (見 doc/setup-sop.md Part E2),用意是在撞到 Google 的配額之前先自己停下來。
+ * 清單成長時以環境變數 MAX_PLACE_CALLS 覆寫。
+ */
+const DEFAULT_MAX_PLACE_CALLS = 400;
 
 /** Pro 級欄位;刻意不含 rating(Enterprise 級,spec §2.2 已決議不取) */
 const PLACE_FIELD_MASK = [
@@ -71,6 +80,38 @@ function readCache(): Cache {
 function writeCache(cache: Cache): void {
   mkdirSync(join(process.cwd(), '.cache'), { recursive: true });
   writeFileSync(CACHE_PATH, `${JSON.stringify(cache, null, 2)}\n`, 'utf-8');
+}
+
+/**
+ * 把預估用量印到 log,並在 CI 上寫進 job summary(GitHub 的執行頁面直接看得到,
+ * 不必展開 log)。
+ */
+function reportPlan(plan: CallPlan, storeCount: number): void {
+  console.log(
+    `[fetch-stores] 預計呼叫:${plan.places} 次 Places / ${plan.geocoding} 次 Geocoding` +
+      `(清單共 ${storeCount} 家,其餘由快取供應)`,
+  );
+
+  const summaryPath = process.env.GITHUB_STEP_SUMMARY;
+  if (!summaryPath) return;
+  appendFileSync(
+    summaryPath,
+    [
+      '### 店家反查預估用量',
+      '',
+      '| 項目 | 次數 |',
+      '| --- | ---: |',
+      `| 清單店家總數 | ${storeCount} |`,
+      `| 預計 Places Text Search 呼叫 | **${plan.places}** |`,
+      `| 預計 Geocoding 呼叫 | ${plan.geocoding} |`,
+      '',
+      plan.places === 0
+        ? '快取全數命中,這次部署不會呼叫任何計費 API。'
+        : `${plan.places} 家未命中快取,將實際呼叫 Places API。`,
+      '',
+    ].join('\n'),
+    'utf-8',
+  );
 }
 
 /** 各日主要區域(trip-data.json 的 B2),決定 areaCenters 與 Text Search 的 location bias */
@@ -174,9 +215,12 @@ async function main(): Promise<void> {
   const keyJson = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
   const sheetId = process.env.SHEET_ID;
   const mapsKey = process.env.GMAPS_SERVER_KEY;
+  // 預檢模式:只讀試算表與快取算出預估用量,不呼叫任何計費 API
+  const dryRun = process.argv.includes('--dry-run');
+
   if (!keyJson) fail('缺少環境變數 GOOGLE_SERVICE_ACCOUNT_KEY');
   if (!sheetId) fail('缺少環境變數 SHEET_ID');
-  if (!mapsKey) fail('缺少環境變數 GMAPS_SERVER_KEY');
+  if (!mapsKey && !dryRun) fail('缺少環境變數 GMAPS_SERVER_KEY');
 
   const credentialSchema = z.object({ client_email: z.string(), private_key: z.string() });
   const parsedKey = credentialSchema.safeParse(JSON.parse(keyJson));
@@ -213,9 +257,33 @@ async function main(): Promise<void> {
   console.log(`[fetch-stores] 「${STORES_TAB}」讀到 ${rows.length} 家店`);
 
   const cache = readCache();
+  const areaNames = readAreaNames();
+
+  // 預檢:先算出這次要花多少額度,超過上限就在「還沒花錢」的狀態下中止。
+  // 撞到 Google 的每日配額是最糟的失敗方式 —— 那時已經打掉大半清單,而快取要等
+  // 迴圈全部跑完才寫入,等於白花;下次重跑又從頭來一次。
+  const plan = planCalls(rows, areaNames, cache);
+  reportPlan(plan, rows.length);
+
+  const maxPlaceCalls = Number(process.env.MAX_PLACE_CALLS ?? DEFAULT_MAX_PLACE_CALLS);
+  if (!Number.isFinite(maxPlaceCalls) || maxPlaceCalls <= 0) {
+    fail(`MAX_PLACE_CALLS 必須是正整數,收到「${process.env.MAX_PLACE_CALLS}」`);
+  }
+  if (plan.places > maxPlaceCalls) {
+    fail(
+      `預計呼叫 ${plan.places} 次 Places,超過上限 ${maxPlaceCalls} 次,已中止(尚未產生任何費用)。\n` +
+        '  → 快取可能遺失,請確認 actions/cache 是否命中;\n' +
+        '  → 若清單確實變長了,請先調高 GCP 的每日配額,再調高 MAX_PLACE_CALLS。',
+    );
+  }
+
+  if (dryRun) {
+    console.log('[fetch-stores] 預檢通過(--dry-run,未呼叫任何計費 API)');
+    return;
+  }
+  if (!mapsKey) fail('缺少環境變數 GMAPS_SERVER_KEY');
 
   // 1) 區域中心
-  const areaNames = readAreaNames();
   const areaCenters: Record<string, LatLng> = {};
   let geocodeCalls = 0;
   for (const area of areaNames) {

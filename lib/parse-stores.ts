@@ -120,6 +120,37 @@ export function storeCacheKey(row: StoreRow): string {
   return row.addressOverride === '' ? base : `${base}|${row.addressOverride}`;
 }
 
+/** 一次執行預計要打的計費 API 次數 */
+export interface CallPlan {
+  readonly places: number;
+  readonly geocoding: number;
+}
+
+/**
+ * 預估這次執行會呼叫幾次計費 API:未命中快取的店家與區域數。
+ *
+ * 一次呼叫對應一個**相異**的快取 key —— 兩列共用同一個 Maps URL 時,第一列查完
+ * 就寫進快取、第二列直接命中,因此只算一次(與 fetch-stores 主迴圈行為一致)。
+ */
+export function planCalls(
+  rows: readonly StoreRow[],
+  areaNames: readonly string[],
+  cached: {
+    readonly places: Readonly<Record<string, unknown>>;
+    readonly areas: Readonly<Record<string, unknown>>;
+  },
+): CallPlan {
+  const pending = new Set<string>();
+  for (const row of rows) {
+    const key = storeCacheKey(row);
+    if (!(key in cached.places)) pending.add(key);
+  }
+  return {
+    places: pending.size,
+    geocoding: areaNames.filter((area) => !(area in cached.areas)).length,
+  };
+}
+
 export interface BuildStoresFileInput {
   readonly rows: readonly StoreRow[];
   /** Places 反查結果,以 `storeCacheKey` 為 key */

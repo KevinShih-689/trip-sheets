@@ -57,11 +57,21 @@ jobs:
           key: stores-cache-${{ github.run_id }}
           restore-keys: stores-cache-
 
+      # 預檢:算出這次會打幾次計費 API 並寫進 job summary。超過 MAX_PLACE_CALLS
+      # 就在這裡中止 —— 此步驟本身不呼叫任何計費 API,所以中止時費用為零。
+      - name: Preflight store lookup usage
+        env:
+          GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+          SHEET_ID: ${{ secrets.SHEET_ID }}
+          MAX_PLACE_CALLS: '400'
+        run: pnpm fetch-stores:check
+
       - name: Fetch store suggestions
         env:
           GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
           SHEET_ID: ${{ secrets.SHEET_ID }}
           GMAPS_SERVER_KEY: ${{ secrets.GMAPS_SERVER_KEY }}
+          MAX_PLACE_CALLS: '400'
         run: pnpm fetch-stores
 
       - name: Format check

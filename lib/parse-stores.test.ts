@@ -3,10 +3,12 @@ import {
   SheetSchemaError,
   buildStoresFile,
   parseStoreRows,
+  planCalls,
   storeCacheKey,
   storeSearchQuery,
   type PlaceResult,
   type Row,
+  type StoreRow,
 } from './parse-stores';
 
 const HEADER_ZH: Row = ['店名', '備註', 'Maps URL', '地址', '地址覆寫'];
@@ -147,6 +149,50 @@ describe('storeCacheKey', () => {
       addressOverride: '',
     };
     expect(storeCacheKey({ ...base, addressOverride: '修正後' })).not.toBe(storeCacheKey(base));
+  });
+});
+
+describe('planCalls — 部署前預估計費 API 用量', () => {
+  function row(overrides: Partial<StoreRow> = {}): StoreRow {
+    return {
+      name: '一蘭',
+      note: '',
+      mapsUrl: 'https://maps.app.goo.gl/a',
+      address: '難波1-1-1',
+      addressOverride: '',
+      ...overrides,
+    };
+  }
+  const EMPTY = { places: {}, areas: {} };
+
+  it('counts every store and area when the cache is empty', () => {
+    const rows = [row(), row({ mapsUrl: 'https://maps.app.goo.gl/b' })];
+    expect(planCalls(rows, ['難波', '京都'], EMPTY)).toEqual({ places: 2, geocoding: 2 });
+  });
+
+  it('counts nothing when the cache covers everything', () => {
+    const rows = [row(), row({ mapsUrl: 'https://maps.app.goo.gl/b' })];
+    const cached = {
+      places: { 'https://maps.app.goo.gl/a': {}, 'https://maps.app.goo.gl/b': {} },
+      areas: { 難波: {}, 京都: {} },
+    };
+    expect(planCalls(rows, ['難波', '京都'], cached)).toEqual({ places: 0, geocoding: 0 });
+  });
+
+  it('counts only the uncached remainder', () => {
+    const rows = [row(), row({ mapsUrl: 'https://maps.app.goo.gl/b' })];
+    const cached = { places: { 'https://maps.app.goo.gl/a': {} }, areas: { 難波: {} } };
+    expect(planCalls(rows, ['難波', '京都'], cached)).toEqual({ places: 1, geocoding: 1 });
+  });
+
+  it('counts duplicate cache keys once — the second row hits the cache the first one fills', () => {
+    const rows = [row(), row({ name: '一蘭(重複列)' })];
+    expect(planCalls(rows, [], EMPTY)).toEqual({ places: 1, geocoding: 0 });
+  });
+
+  it('counts a row again once its address override changes', () => {
+    const cached = { places: { 'https://maps.app.goo.gl/a': {} }, areas: {} };
+    expect(planCalls([row({ addressOverride: '修正後' })], [], cached).places).toBe(1);
   });
 });
 
