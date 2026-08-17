@@ -43,7 +43,14 @@ export function AppNav({ days, generatedAt, totalYen, title, eyebrow }: Props): 
       {/* ── Desktop sidebar ── */}
       <aside className="side-nav">
         <div className="brand">
-          <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 8, letterSpacing: '0.06em', color: 'var(--faint)' }}>
+          <div
+            style={{
+              fontFamily: 'var(--font-pixel)',
+              fontSize: 8,
+              letterSpacing: '0.06em',
+              color: 'var(--faint)',
+            }}
+          >
             {eyebrow}
           </div>
           <div style={{ fontSize: 19, fontWeight: 700, marginTop: 9 }}>{title}</div>
@@ -53,7 +60,11 @@ export function AppNav({ days, generatedAt, totalYen, title, eyebrow }: Props): 
             總覽
           </Link>
           {days.map((d) => (
-            <Link key={d.date} href={`/day/${d.date}`} className={isActive(`/day/${d.date}`) ? 'sitem on' : 'sitem'}>
+            <Link
+              key={d.date}
+              href={`/day/${d.date}`}
+              className={isActive(`/day/${d.date}`) ? 'sitem on' : 'sitem'}
+            >
               <span className="snum">{d.dayNum}</span>
               <span className="sarea">{d.area || '─'}</span>
             </Link>
@@ -63,8 +74,18 @@ export function AppNav({ days, generatedAt, totalYen, title, eyebrow }: Props): 
           </Link>
         </div>
         <div className="sfoot">
-          <div style={{ fontSize: 11, color: 'var(--faint)' }}>資料更新於 {formatGeneratedAt(generatedAt)}</div>
-          <div style={{ fontFamily: 'var(--font-plex)', fontSize: 13, fontWeight: 500, color: 'var(--yellow)', marginTop: 6 }}>
+          <div style={{ fontSize: 11, color: 'var(--faint)' }}>
+            資料更新於 {formatGeneratedAt(generatedAt)}
+          </div>
+          <div
+            style={{
+              fontFamily: 'var(--font-plex)',
+              fontSize: 13,
+              fontWeight: 500,
+              color: 'var(--yellow)',
+              marginTop: 6,
+            }}
+          >
             Σ {formatYen(totalYen)}
           </div>
         </div>

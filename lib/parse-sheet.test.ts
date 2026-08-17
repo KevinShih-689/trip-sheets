@@ -71,7 +71,18 @@ describe('assertHeaders — schema-drift guard (spec §3.1.3)', () => {
 describe('parseDayTab — row termination', () => {
   it('reads rows until the first blank name (spec §3.1.1)', () => {
     const rows = dayRowsWith([
-      ['10:00', '景點', '大阪城', '大阪', '地鐵', '09:00-17:00', '600', '不需預約', 'https://x', ''],
+      [
+        '10:00',
+        '景點',
+        '大阪城',
+        '大阪',
+        '地鐵',
+        '09:00-17:00',
+        '600',
+        '不需預約',
+        'https://x',
+        '',
+      ],
       ['12:00', '餐廳', '', '', '', '', '', '', '', ''], // empty name → stop
       ['13:00', '景點', '通天閣', '', '', '', '', '', '', ''], // must NOT be read
     ]);
@@ -94,7 +105,18 @@ describe('parseDayTab — row termination', () => {
 
   it('throws when the itinerary header row drifted', () => {
     const rows = dayRowsWith([]);
-    rows[6] = ['時段', '種類', '名稱', '區域', '交通方式 / 車程', '營業時間', '預估費用 (¥)', '預約狀態', '地圖 / 官網連結', '備註'];
+    rows[6] = [
+      '時段',
+      '種類',
+      '名稱',
+      '區域',
+      '交通方式 / 車程',
+      '營業時間',
+      '預估費用 (¥)',
+      '預約狀態',
+      '地圖 / 官網連結',
+      '備註',
+    ];
     expect(() => parseDayTab('2026-12-14', '12.14 (一)', rows)).toThrow(SheetSchemaError);
   });
 });
@@ -102,7 +124,21 @@ describe('parseDayTab — row termination', () => {
 describe('sensitive-field filtering (spec §3.2)', () => {
   it('parseFlight drops the PNR column (index 9) entirely', () => {
     // index:      0     1            2       3        4       5       6       7       8    9(PNR)    10     11    12
-    const row: Row = ['去程', '2026/12/14', 'JAL', 'JL812', 'KIX', '10:00', 'TPE', '12:30', 'T1', 'ABC123', '18,000', '23kg', 'note'];
+    const row: Row = [
+      '去程',
+      '2026/12/14',
+      'JAL',
+      'JL812',
+      'KIX',
+      '10:00',
+      'TPE',
+      '12:30',
+      'T1',
+      'ABC123',
+      '18,000',
+      '23kg',
+      'note',
+    ];
     const flight = parseFlight(row);
     expect(Object.keys(flight)).not.toContain('pnr');
     expect(JSON.stringify(flight)).not.toContain('ABC123');
@@ -112,7 +148,21 @@ describe('sensitive-field filtering (spec §3.2)', () => {
 
   it('parseRoom drops the booking reference (訂單編號, index 8) entirely', () => {
     // index:     0        1       2            3            4    5         6       7           8(訂單編號)  9        10           11          12
-    const row: Row = ['Hotel X', '難波', '2026/12/14', '2026/12/16', '2', '雙人房', '30000', 'Booking', 'ORD-9988', '已付全額', '2026/12/01', '大阪市...', 'note'];
+    const row: Row = [
+      'Hotel X',
+      '難波',
+      '2026/12/14',
+      '2026/12/16',
+      '2',
+      '雙人房',
+      '30000',
+      'Booking',
+      'ORD-9988',
+      '已付全額',
+      '2026/12/01',
+      '大阪市...',
+      'note',
+    ];
     const room = parseRoom(row);
     expect(JSON.stringify(room)).not.toContain('ORD-9988');
     expect(room.paymentStatus).toBe('已付全額');
@@ -162,9 +212,7 @@ describe('parseBacklog + buildTripData integration', () => {
   });
 
   it('buildTripData validates and returns a well-formed TripData', () => {
-    const dayInputs = [
-      { isoDate: '2026-12-14', tab: '12.14 (一)', rows: dayRowsWith([]) },
-    ];
+    const dayInputs = [{ isoDate: '2026-12-14', tab: '12.14 (一)', rows: dayRowsWith([]) }];
     const data = buildTripData({
       title: '大阪・六日',
       dayInputs,

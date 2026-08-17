@@ -19,7 +19,14 @@ export function EmptyState({ title, hint }: Props): React.JSX.Element {
         {title}
       </Box>
       {hint && (
-        <Box fontSize="12.5px" color="pixel.dim" mt="8px" textAlign="center" lineHeight="1.7" style={{ textWrap: 'pretty' }}>
+        <Box
+          fontSize="12.5px"
+          color="pixel.dim"
+          mt="8px"
+          textAlign="center"
+          lineHeight="1.7"
+          style={{ textWrap: 'pretty' }}
+        >
           {hint}
         </Box>
       )}

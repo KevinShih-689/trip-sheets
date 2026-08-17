@@ -20,7 +20,17 @@ function SectionTitle({ zh, en }: { zh: string; en: string }): React.JSX.Element
 /** 區塊級空狀態:同一套問號方塊元件的小尺寸版(D3 定稿) */
 function SectionEmpty({ text }: { text: string }): React.JSX.Element {
   return (
-    <Flex mx="16px" my="8px" px="16px" py="16px" borderWidth="1px" borderColor="pixel.line" borderRadius="10px" align="center" gap="16px">
+    <Flex
+      mx="16px"
+      my="8px"
+      px="16px"
+      py="16px"
+      borderWidth="1px"
+      borderColor="pixel.line"
+      borderRadius="10px"
+      align="center"
+      gap="16px"
+    >
       <QBlock size="sm" idle={false} />
       <Box>
         <Box fontFamily="pixel" fontSize="7px" color="pixel.yellow">
@@ -57,7 +67,10 @@ export default function BacklogPage(): React.JSX.Element {
     return (
       <Flex direction="column" minH="calc(100dvh - var(--tabbar-h))">
         {header}
-        <EmptyState title="還沒有行前資料" hint="到 Google Sheets 的「Backlog」tab 填入機票/住宿資訊後重新部署" />
+        <EmptyState
+          title="還沒有行前資料"
+          hint="到 Google Sheets 的「Backlog」tab 填入機票/住宿資訊後重新部署"
+        />
       </Flex>
     );
   }

@@ -1,11 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { SheetSchemaError } from './sheet-error';
-import {
-  buildEyebrow,
-  buildSplashWorld,
-  parseDateTabName,
-  resolveDateTabs,
-} from './sheet-tabs';
+import { buildEyebrow, buildSplashWorld, parseDateTabName, resolveDateTabs } from './sheet-tabs';
 
 // build 當年參考日:用固定日期讓年份推斷可重現
 const REF = new Date(2026, 7, 6); // 2026-08-06(local)
