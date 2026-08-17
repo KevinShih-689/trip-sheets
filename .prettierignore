@@ -1,0 +1,20 @@
+# 產物與相依
+.next/
+out/
+coverage/
+node_modules/
+pnpm-lock.yaml
+tsconfig.tsbuildinfo
+
+# 由 API 產生的資料檔(格式由 script 決定,不受 Prettier 管)
+data/trip-data.json
+data/stores.json
+
+# 工具產物
+graphify-out/
+public/sw.js
+
+# Agent harness 設定:非專案原始碼,且部分檔案不是合法 YAML
+.agents/
+.claude/
+.codex/
