@@ -4,12 +4,12 @@ Detailed, one-time setup for wiring the site to your Google Sheet and Google Map
 
 You will produce four values, which become GitHub Secrets in the README's "Add GitHub Secrets" step:
 
-| Value | Where it comes from | Secret name |
-| --- | --- | --- |
-| Service-account JSON key | Part A | `GOOGLE_SERVICE_ACCOUNT_KEY` |
-| Spreadsheet ID | Part C | `SHEET_ID` |
-| Maps Embed API key | Part D | `NEXT_PUBLIC_GMAPS_EMBED_KEY` |
-| Spreadsheet share URL | Part C | `NEXT_PUBLIC_SHEETS_URL` |
+| Value                    | Where it comes from | Secret name                   |
+| ------------------------ | ------------------- | ----------------------------- |
+| Service-account JSON key | Part A              | `GOOGLE_SERVICE_ACCOUNT_KEY`  |
+| Spreadsheet ID           | Part C              | `SHEET_ID`                    |
+| Maps Embed API key       | Part D              | `NEXT_PUBLIC_GMAPS_EMBED_KEY` |
+| Spreadsheet share URL    | Part C              | `NEXT_PUBLIC_SHEETS_URL`      |
 
 ---
 
