@@ -190,9 +190,33 @@ This is what replaces the service-account key. GitHub Actions presents its own O
 identity, GCP exchanges it for a token that expires in about an hour, and the exchange
 is accepted **only** for this repository.
 
-Run these once with `gcloud` (substitute your project and repo):
+Run these once with `gcloud` (substitute your project and repo).
 
-1. Create the pool and an OIDC provider:
+> **`<PROJECT_ID>` is not the project's display name.** In the console the name shown at
+> the top (e.g. `branding-web`) is a label; the ID is a separate string. `gcloud` only
+> accepts the ID or the number. Get all three with:
+>
+> ```bash
+> gcloud projects list --format="table(projectId,name,projectNumber)"
+> ```
+>
+> `<PROJECT_NUMBER>` is the numeric one — step 3 and the provider resource name need it,
+> and substituting the ID there fails with a confusing permission error rather than a
+> clear "wrong value".
+
+1. Enable the APIs federation depends on. A project created through the console has none
+   of these on by default, and the failure they produce (`SERVICE_DISABLED` during the
+   token exchange) does not name the missing service clearly:
+   ```bash
+   gcloud services enable \
+     iam.googleapis.com \
+     iamcredentials.googleapis.com \
+     sts.googleapis.com \
+     cloudresourcemanager.googleapis.com \
+     --project="<PROJECT_ID>"
+   ```
+
+2. Create the pool and an OIDC provider:
    ```bash
    gcloud iam workload-identity-pools create "github" \
      --project="<PROJECT_ID>" --location="global"
@@ -208,7 +232,7 @@ Run these once with `gcloud` (substitute your project and repo):
    > `--attribute-condition` is the line that matters. Without it **any** GitHub
    > repository on the internet can mint tokens for your service account.
 
-2. Let that repository impersonate the service account from Part B:
+3. Let that repository impersonate the service account from Part B:
    ```bash
    gcloud iam service-accounts add-iam-policy-binding "<SA_EMAIL>" \
      --project="<PROJECT_ID>" \
@@ -216,7 +240,7 @@ Run these once with `gcloud` (substitute your project and repo):
      --member="principalSet://iam.googleapis.com/projects/<PROJECT_NUMBER>/locations/global/workloadIdentityPools/github/attribute.repository/<OWNER>/<REPO>"
    ```
 
-3. Add two GitHub Actions secrets (repo → Settings → Secrets and variables → Actions):
+4. Add two GitHub Actions secrets (repo → Settings → Secrets and variables → Actions):
 
    | Secret | Value |
    | --- | --- |
@@ -227,7 +251,7 @@ Run these once with `gcloud` (substitute your project and repo):
    They live in secrets rather than the workflow file simply because this repo is public
    and there is no reason to publish the project number and service-account address.
 
-4. Confirm it works **before** merging anything: Actions → **Auth check** → Run workflow,
+5. Confirm it works **before** merging anything: Actions → **Auth check** → Run workflow,
    from any branch, with `mode: check`. It authenticates, reads the sheet, and prints the
    projected API usage. It never deploys and makes no billable call.
 
