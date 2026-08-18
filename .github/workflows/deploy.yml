@@ -42,9 +42,15 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # 以 GitHub 的 OIDC 身分換取短期 Google 憑證(約 1 小時),CI 不再持有任何
+      # 長期私鑰。可換取的對象在 GCP 端以 attribute-condition 限定為本 repo。
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
       - name: Fetch sheet data
         env:
-          GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
           SHEET_ID: ${{ secrets.SHEET_ID }}
         run: pnpm fetch-sheet
 
@@ -61,14 +67,12 @@ jobs:
       # 就在這裡中止 —— 此步驟本身不呼叫任何計費 API,所以中止時費用為零。
       - name: Preflight store lookup usage
         env:
-          GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
           SHEET_ID: ${{ secrets.SHEET_ID }}
           MAX_PLACE_CALLS: '400'
         run: pnpm fetch-stores:check
 
       - name: Fetch store suggestions
         env:
-          GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
           SHEET_ID: ${{ secrets.SHEET_ID }}
           GMAPS_SERVER_KEY: ${{ secrets.GMAPS_SERVER_KEY }}
           MAX_PLACE_CALLS: '400'

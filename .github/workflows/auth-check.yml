@@ -1,0 +1,69 @@
+name: Auth check
+
+# WIF 與 Maps OAuth 的端到端驗證。本機不再持有任何 Google 憑證,所以「真的連得上嗎」
+# 這個問題只能在 CI 回答 —— 這支 workflow 就是為此存在。
+#
+# 它永遠不部署,可以安全地從任何分支手動觸發,合併前就能確認設定是否正確。
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'check = 不呼叫任何計費 API;full = 實際執行店家反查'
+        type: choice
+        options:
+          - check
+          - full
+        default: check
+
+permissions:
+  contents: read
+  id-token: write # 換取 Google 短期憑證所需
+
+jobs:
+  auth-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      # 走得到這裡就代表 WIF 打通了:Sheets 是以短期憑證讀取的。
+      - name: Fetch sheet data
+        env:
+          SHEET_ID: ${{ secrets.SHEET_ID }}
+        run: pnpm fetch-sheet
+
+      # 與 deploy 共用同一組快取 key,才驗證得了「連跑兩次第二次應為 0 次」的契約。
+      - name: Restore store lookup cache
+        uses: actions/cache@v4
+        with:
+          path: .cache
+          key: stores-cache-${{ github.run_id }}
+          restore-keys: stores-cache-
+
+      - name: Preflight store lookup usage
+        env:
+          SHEET_ID: ${{ secrets.SHEET_ID }}
+          MAX_PLACE_CALLS: '400'
+        run: pnpm fetch-stores:check
+
+      - name: Fetch store suggestions (real API calls)
+        if: inputs.mode == 'full'
+        env:
+          SHEET_ID: ${{ secrets.SHEET_ID }}
+          GMAPS_SERVER_KEY: ${{ secrets.GMAPS_SERVER_KEY }}
+          MAX_PLACE_CALLS: '400'
+        run: pnpm fetch-stores
