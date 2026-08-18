@@ -159,19 +159,21 @@ The SOP ends by producing the four values you'll paste as GitHub Secrets in step
 
 Repo → **Settings → Secrets and variables → Actions**:
 
-| Secret                        | Value                                                                                                                                                                                             |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GOOGLE_SERVICE_ACCOUNT_KEY`  | The full service-account JSON key                                                                                                                                                                 |
-| `SHEET_ID`                    | The ID between `/d/` and `/edit` in the spreadsheet URL                                                                                                                                           |
-| `NEXT_PUBLIC_GMAPS_EMBED_KEY` | Maps Embed API key (restrict by HTTP referrer to your Pages domain)                                                                                                                               |
-| `NEXT_PUBLIC_SHEETS_URL`      | Public/edit URL of the sheet, used by the "open Google Sheets" links                                                                                                                              |
-| `GMAPS_SERVER_KEY`            | **Store suggestions only.** Places API (New) + Geocoding key, used at build time. No `NEXT_PUBLIC_` prefix — it never enters the bundle. Restrict it to those two APIs and set a daily quota cap. |
+| Secret                           | Value                                                                                           |
+| -------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `GCP_WORKLOAD_IDENTITY_PROVIDER` | Full resource name of the Workload Identity provider (see [setup SOP](doc/setup-sop.md) Part F) |
+| `GCP_SERVICE_ACCOUNT`            | Service-account email the workflow impersonates                                                 |
+| `SHEET_ID`                       | The ID between `/d/` and `/edit` in the spreadsheet URL                                         |
+| `NEXT_PUBLIC_GMAPS_EMBED_KEY`    | Maps Embed API key (restrict by HTTP referrer to your Pages domain)                             |
+| `NEXT_PUBLIC_SHEETS_URL`         | Public/edit URL of the sheet, used by the "open Google Sheets" links                            |
 
-> `GMAPS_SERVER_KEY` requires billing enabled on the GCP project. Usage stays inside the free tier (lookups are cached; only new or edited rows call the API), so the actual bill is $0 — but the card must be on file for the APIs to respond. Skip this secret if you don't want the 推薦 tab; the rest of the site builds fine without it.
+> **There is no long-lived Google credential here.** The deploy exchanges GitHub's OIDC identity for a short-lived token via Workload Identity Federation, and GCP only honours that exchange for this repository. Nothing to rotate, nothing to leak.
+
+> The 推薦 tab still needs billing enabled on the GCP project — Places API (New) and Geocoding are billable services. Usage stays inside the free tier (lookups are cached; only new or edited rows call the API), so the actual bill is $0, but the card must be on file for the APIs to respond.
 
 Then set **Settings → Pages → Source = GitHub Actions**.
 
-> ⚠️ The service-account JSON key **must never be committed**. `.gitignore` already blocks `*service-account*.json`, `*sa-key*.json`, `.env*`, and the generated `data/trip-data.json`.
+> ⚠️ Do not create a JSON key for the service account. Federation makes it unnecessary, and a key that does not exist cannot be committed or leaked. `.gitignore` still blocks `*service-account*.json`, `*sa-key*.json`, `.env*`, and the generated `data/trip-data.json`.
 
 ### 4. Adjust the template for your trip
 
@@ -212,14 +214,13 @@ pnpm fetch-sheet:sample     # copies data/trip-data.sample.json → data/trip-da
 pnpm fetch-stores:sample    # copies data/stores.sample.json → data/stores.json
 pnpm dev
 
-# Option B — pull live data from your sheet
-export GOOGLE_SERVICE_ACCOUNT_KEY="$(cat /path/to/your-sa-key.json)"
-export SHEET_ID="your-sheet-id"
-pnpm fetch-sheet            # writes data/trip-data.json
-export GMAPS_SERVER_KEY="your-server-key"
-pnpm fetch-stores           # writes data/stores.json (needs fetch-sheet first)
 pnpm dev
 ```
+
+Sample data is the only local path: there are no credentials on your machine to
+pull live data with. To refresh from the real sheet, run the **Auth check**
+workflow (Actions → Auth check → Run workflow) with `mode: full` — it exercises
+the same scripts in CI, where the federated credentials live.
 
 Open http://localhost:3000.
 
