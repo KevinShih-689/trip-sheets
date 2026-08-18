@@ -97,12 +97,17 @@ created in Part A, or pick it from the project switcher once you land on the pag
      calls `places.googleapis.com/v1/places:searchText`, which only the new one serves.
 2. **No API key is needed.** Both APIs are called with the federated OAuth token from
    Part F, so there is nothing to create, restrict, or rotate here.
-3. Grant the service account permission to consume these APIs:
+3. Grant the service account permission to consume these APIs. **IAM & Admin → IAM →
+   Grant access**: principal = the service-account email from Part B, role =
+   **Service Usage Consumer**. Save.
+
    ```bash
+   # CLI equivalent
    gcloud projects add-iam-policy-binding <PROJECT_ID> \
      --member="serviceAccount:<SA_EMAIL>" \
      --role="roles/serviceusage.serviceUsageConsumer"
    ```
+
    If a Places or Geocoding call later returns 403, this binding is the first thing to
    check — the token is valid but the identity lacks permission to spend the project's
    quota.
@@ -190,70 +195,120 @@ This is what replaces the service-account key. GitHub Actions presents its own O
 identity, GCP exchanges it for a token that expires in about an hour, and the exchange
 is accepted **only** for this repository.
 
-Run these once with `gcloud` (substitute your project and repo).
+Before starting, collect three values — the console shows the first two on the project
+picker / dashboard:
 
-> **`<PROJECT_ID>` is not the project's display name.** In the console the name shown at
-> the top (e.g. `branding-web`) is a label; the ID is a separate string. `gcloud` only
-> accepts the ID or the number. Get all three with:
->
-> ```bash
-> gcloud projects list --format="table(projectId,name,projectNumber)"
-> ```
->
-> `<PROJECT_NUMBER>` is the numeric one — step 3 and the provider resource name need it,
-> and substituting the ID there fails with a confusing permission error rather than a
-> clear "wrong value".
+| Value | Where |
+| --- | --- |
+| **Project ID** | Not the display name at the top of the console. Dashboard → Project info |
+| **Project number** | Same card. Numeric |
+| **Service-account email** | Part B |
 
-1. Enable the APIs federation depends on. A project created through the console has none
-   of these on by default, and the failure they produce (`SERVICE_DISABLED` during the
-   token exchange) does not name the missing service clearly:
-   ```bash
-   gcloud services enable \
-     iam.googleapis.com \
-     iamcredentials.googleapis.com \
-     sts.googleapis.com \
-     cloudresourcemanager.googleapis.com \
-     --project="<PROJECT_ID>"
-   ```
+> The display name and the ID are different strings. Anywhere below that asks for the
+> **number**, the ID will not do — and the resulting error reads like a permissions
+> problem rather than a wrong value, which sends you looking in the wrong place.
 
-2. Create the pool and an OIDC provider:
-   ```bash
-   gcloud iam workload-identity-pools create "github" \
-     --project="<PROJECT_ID>" --location="global"
+### F1 — Enable the APIs federation needs
 
-   gcloud iam workload-identity-pools providers create-oidc "trip-sheets" \
-     --project="<PROJECT_ID>" --location="global" \
-     --workload-identity-pool="github" \
-     --issuer-uri="https://token.actions.githubusercontent.com" \
-     --attribute-mapping="google.subject=assertion.sub,attribute.repository=assertion.repository" \
-     --attribute-condition="assertion.repository == '<OWNER>/<REPO>'"
-   ```
+**APIs & Services → Library**, search and **Enable** each:
 
-   > `--attribute-condition` is the line that matters. Without it **any** GitHub
-   > repository on the internet can mint tokens for your service account.
+- Identity and Access Management (IAM) API
+- IAM Service Account Credentials API
+- Security Token Service API
+- Cloud Resource Manager API
 
-3. Let that repository impersonate the service account from Part B:
-   ```bash
-   gcloud iam service-accounts add-iam-policy-binding "<SA_EMAIL>" \
-     --project="<PROJECT_ID>" \
-     --role="roles/iam.workloadIdentityUser" \
-     --member="principalSet://iam.googleapis.com/projects/<PROJECT_NUMBER>/locations/global/workloadIdentityPools/github/attribute.repository/<OWNER>/<REPO>"
-   ```
+A project created through the console starts with none of these. Skipping this step
+produces a `SERVICE_DISABLED` error during the token exchange that does not name the
+missing service.
 
-4. Add two GitHub Actions secrets (repo → Settings → Secrets and variables → Actions):
+### F2 — Create the pool and provider
 
-   | Secret | Value |
+**IAM & Admin → Workload Identity Federation → Create pool**.
+
+1. **Pool**: name `github` → **Continue**.
+2. **Add a provider**:
+   - Select a provider: **OpenID Connect (OIDC)**
+   - Provider name / ID: `trip-sheets`
+   - Issuer URL: `https://token.actions.githubusercontent.com`
+   - Audiences: **Default audience**
+   - **Continue**
+3. **Configure provider attributes** — add both mappings:
+
+   | Google | OIDC assertion |
    | --- | --- |
-   | `GCP_WORKLOAD_IDENTITY_PROVIDER` | `projects/<PROJECT_NUMBER>/locations/global/workloadIdentityPools/github/providers/trip-sheets` |
-   | `GCP_SERVICE_ACCOUNT` | the service-account email from Part B |
+   | `google.subject` | `assertion.sub` |
+   | `attribute.repository` | `assertion.repository` |
 
-   Neither value is a credential — without a matching OIDC identity they grant nothing.
-   They live in secrets rather than the workflow file simply because this repo is public
-   and there is no reason to publish the project number and service-account address.
+4. **Attribute conditions** → enter:
 
-5. Confirm it works **before** merging anything: Actions → **Auth check** → Run workflow,
-   from any branch, with `mode: check`. It authenticates, reads the sheet, and prints the
-   projected API usage. It never deploys and makes no billable call.
+   ```
+   assertion.repository == 'OWNER/REPO'
+   ```
+
+   > This condition is the security boundary of the whole setup. Without it, **any**
+   > GitHub repository on the internet can present its OIDC token and receive one of
+   > yours. Everything else here is plumbing; this line is the lock.
+
+5. **Save**.
+
+### F3 — Let the repository impersonate the service account
+
+On the **Workload Identity Pools** page, open the `github` pool → **Grant access**.
+
+1. Choose **Grant access using Service Account impersonation**.
+2. Service account: the one from Part B.
+3. Select principals → **attribute name** `repository`, **attribute value** `OWNER/REPO`.
+4. **Save**. Dismiss the offer to download a config file — the workflow already has what
+   it needs.
+
+### F4 — Note the provider resource name
+
+Expand the pool in the list to read the provider's full resource name, or assemble it:
+
+```
+projects/<PROJECT_NUMBER>/locations/global/workloadIdentityPools/github/providers/trip-sheets
+```
+
+### F5 — Add two GitHub Actions secrets
+
+Repo → Settings → Secrets and variables → Actions:
+
+| Secret | Value |
+| --- | --- |
+| `GCP_WORKLOAD_IDENTITY_PROVIDER` | the resource name from F4 |
+| `GCP_SERVICE_ACCOUNT` | the service-account email from Part B |
+
+Neither value is a credential — without a matching OIDC identity they grant nothing. They
+live in secrets rather than the workflow file only because this repo is public, and there
+is no reason to publish the project number and service-account address.
+
+### F6 — Confirm before merging
+
+Actions → **Auth check** → Run workflow, from any branch, `mode: check`. It authenticates,
+reads the sheet, and prints the projected API usage. It never deploys and makes no
+billable call.
+
+### CLI equivalent
+
+The same setup, if you would rather not click:
+
+```bash
+gcloud services enable iam.googleapis.com iamcredentials.googleapis.com \
+  sts.googleapis.com cloudresourcemanager.googleapis.com --project="<PROJECT_ID>"
+
+gcloud iam workload-identity-pools create "github" \
+  --project="<PROJECT_ID>" --location="global"
+
+gcloud iam workload-identity-pools providers create-oidc "trip-sheets" \
+  --project="<PROJECT_ID>" --location="global" --workload-identity-pool="github" \
+  --issuer-uri="https://token.actions.githubusercontent.com" \
+  --attribute-mapping="google.subject=assertion.sub,attribute.repository=assertion.repository" \
+  --attribute-condition="assertion.repository == '<OWNER>/<REPO>'"
+
+gcloud iam service-accounts add-iam-policy-binding "<SA_EMAIL>" \
+  --project="<PROJECT_ID>" --role="roles/iam.workloadIdentityUser" \
+  --member="principalSet://iam.googleapis.com/projects/<PROJECT_NUMBER>/locations/global/workloadIdentityPools/github/attribute.repository/<OWNER>/<REPO>"
+```
 
 ---
 
