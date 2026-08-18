@@ -15,6 +15,7 @@ export default defineConfig({
         'lib/suggestions.ts',
         'lib/store-types.ts',
         'lib/haversine.ts',
+        'lib/geocode.ts',
       ],
       reporter: ['text', 'html'],
     },

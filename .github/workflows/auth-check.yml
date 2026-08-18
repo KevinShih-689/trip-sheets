@@ -64,6 +64,5 @@ jobs:
         if: inputs.mode == 'full'
         env:
           SHEET_ID: ${{ secrets.SHEET_ID }}
-          GMAPS_SERVER_KEY: ${{ secrets.GMAPS_SERVER_KEY }}
           MAX_PLACE_CALLS: '400'
         run: pnpm fetch-stores

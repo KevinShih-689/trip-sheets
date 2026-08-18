@@ -4,15 +4,15 @@
  * IO + CLI wrapper only. Header resolution, merging and validation live in
  * `lib/parse-stores.ts` (pure, unit-tested).
  *
- * 需要環境變數 SHEET_ID、GMAPS_SERVER_KEY(僅剩 Geocoding 在用)。
- * Sheets 與 Places 皆以 ADC 取得的短期 token 呼叫;CI 的憑證來自 Workload
- * Identity Federation,不再有任何長期私鑰。
+ * 只需要環境變數 SHEET_ID。Sheets、Places、Geocoding 一律以 ADC 取得的短期
+ * token 呼叫;CI 的憑證來自 Workload Identity Federation,沒有任何長期金鑰。
  */
 import { appendFileSync, mkdirSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { google } from 'googleapis';
 import { z } from 'zod';
 import { STORES_TAB } from '../lib/constants';
+import { geocodeUrl, parseGeocodeResponse } from '../lib/geocode';
 import {
   SheetSchemaError,
   buildStoresFile,
@@ -126,26 +126,15 @@ function readAreaNames(): string[] {
   return [...new Set(parsed.data.days.map((d) => d.mainArea).filter((a) => a !== ''))];
 }
 
-async function geocodeArea(area: string, apiKey: string): Promise<LatLng | null> {
-  const url = new URL('https://maps.googleapis.com/maps/api/geocode/json');
-  url.searchParams.set('address', area);
-  url.searchParams.set('language', 'zh-TW');
-  url.searchParams.set('key', apiKey);
-
-  const res = await fetch(url);
-  if (!res.ok) fail(`Geocoding API HTTP ${res.status}(區域「${area}」)`);
-  const body = (await res.json()) as {
-    status: string;
-    error_message?: string;
-    results?: { geometry?: { location?: { lat: number; lng: number } } }[];
-  };
-
-  if (body.status === 'ZERO_RESULTS') return null;
-  if (body.status !== 'OK') {
-    fail(`Geocoding API 回傳 ${body.status}:${body.error_message ?? '(無訊息)'}`);
+async function geocodeArea(area: string, accessToken: string): Promise<LatLng | null> {
+  const res = await fetch(geocodeUrl(area), {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!res.ok) {
+    const detail = await res.text();
+    fail(`Geocoding API HTTP ${res.status}(區域「${area}」):${detail.slice(0, 300)}`);
   }
-  const loc = body.results?.[0]?.geometry?.location;
-  return loc ? { lat: loc.lat, lng: loc.lng } : null;
+  return parseGeocodeResponse(await res.json());
 }
 
 /** 以所有區域中心的外接矩形(加緩衝)當作 Text Search 的 location bias */
@@ -229,12 +218,10 @@ function explain(err: unknown): string {
 
 async function main(): Promise<void> {
   const sheetId = process.env.SHEET_ID;
-  const mapsKey = process.env.GMAPS_SERVER_KEY;
   // 預檢模式:只讀試算表與快取算出預估用量,不呼叫任何計費 API
   const dryRun = process.argv.includes('--dry-run');
 
   if (!sheetId) fail('缺少環境變數 SHEET_ID');
-  if (!mapsKey && !dryRun) fail('缺少環境變數 GMAPS_SERVER_KEY');
 
   const auth = new google.auth.GoogleAuth({
     scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
@@ -294,11 +281,9 @@ async function main(): Promise<void> {
     console.log('[fetch-stores] 預檢通過(--dry-run,未呼叫任何計費 API)');
     return;
   }
-  if (!mapsKey) fail('缺少環境變數 GMAPS_SERVER_KEY');
-
   // 預檢通過之後才取 token —— dry-run 連憑證都不需要
-  const placesToken = await mapsAuth.getAccessToken();
-  if (!placesToken) fail('無法取得 Places API 的存取權杖(檢查服務帳戶權限)');
+  const mapsToken = await mapsAuth.getAccessToken();
+  if (!mapsToken) fail('無法取得 Maps API 的存取權杖(檢查服務帳戶權限)');
 
   // 1) 區域中心
   const areaCenters: Record<string, LatLng> = {};
@@ -309,7 +294,7 @@ async function main(): Promise<void> {
       areaCenters[area] = hit;
       continue;
     }
-    const center = await geocodeArea(area, mapsKey);
+    const center = await geocodeArea(area, mapsToken);
     geocodeCalls += 1;
     if (center) {
       areaCenters[area] = center;
@@ -330,7 +315,7 @@ async function main(): Promise<void> {
       resolved.set(key, hit);
       continue;
     }
-    const place = await searchPlace(row, placesToken, bias);
+    const place = await searchPlace(row, mapsToken, bias);
     placeCalls += 1;
     if (place) {
       resolved.set(key, place);
