@@ -4,9 +4,9 @@
  * IO + CLI wrapper only. Header resolution, merging and validation live in
  * `lib/parse-stores.ts` (pure, unit-tested).
  *
- * 需要環境變數 SHEET_ID、GMAPS_SERVER_KEY。Sheets 憑證改由 ADC 提供:
- * CI 以 Workload Identity Federation 取得短期 token,不再有任何長期私鑰。
- * GMAPS_SERVER_KEY 只在 CI 使用,永不進入前端 bundle(不加 NEXT_PUBLIC_ 前綴)。
+ * 需要環境變數 SHEET_ID、GMAPS_SERVER_KEY(僅剩 Geocoding 在用)。
+ * Sheets 與 Places 皆以 ADC 取得的短期 token 呼叫;CI 的憑證來自 Workload
+ * Identity Federation,不再有任何長期私鑰。
  */
 import { appendFileSync, mkdirSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -165,14 +165,16 @@ function boundsOf(centers: readonly LatLng[]): {
 
 async function searchPlace(
   row: StoreRow,
-  apiKey: string,
+  accessToken: string,
   bias: ReturnType<typeof boundsOf>,
 ): Promise<PlaceResult | null> {
   const res = await fetch('https://places.googleapis.com/v1/places:searchText', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-Goog-Api-Key': apiKey,
+      // OAuth 短期 token 取代 API 金鑰;FieldMask 不變 —— 它決定計費層級(Pro),
+      // 與驗證方式無關。
+      Authorization: `Bearer ${accessToken}`,
       'X-Goog-FieldMask': PLACE_FIELD_MASK,
     },
     body: JSON.stringify({
@@ -237,6 +239,11 @@ async function main(): Promise<void> {
   const auth = new google.auth.GoogleAuth({
     scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
   });
+  // Maps 與 Sheets 各自一個 client:Workspace 與 Cloud 的 scope 分開要求,
+  // 避免混在同一個 token 產生非預期的授權範圍。
+  const mapsAuth = new google.auth.GoogleAuth({
+    scopes: ['https://www.googleapis.com/auth/cloud-platform'],
+  });
   const sheets = google.sheets({ version: 'v4', auth });
 
   const metaRes = await sheets.spreadsheets.get({
@@ -289,6 +296,10 @@ async function main(): Promise<void> {
   }
   if (!mapsKey) fail('缺少環境變數 GMAPS_SERVER_KEY');
 
+  // 預檢通過之後才取 token —— dry-run 連憑證都不需要
+  const placesToken = await mapsAuth.getAccessToken();
+  if (!placesToken) fail('無法取得 Places API 的存取權杖(檢查服務帳戶權限)');
+
   // 1) 區域中心
   const areaCenters: Record<string, LatLng> = {};
   let geocodeCalls = 0;
@@ -319,7 +330,7 @@ async function main(): Promise<void> {
       resolved.set(key, hit);
       continue;
     }
-    const place = await searchPlace(row, mapsKey, bias);
+    const place = await searchPlace(row, placesToken, bias);
     placeCalls += 1;
     if (place) {
       resolved.set(key, place);
