@@ -57,7 +57,7 @@ jobs:
       # Places/Geocoding 反查結果的快取:只有新增或修改過的店家才會真的打 API。
       # 快取遺失只會讓這次 build 全量重查(仍在免費額度內),不影響正確性。
       - name: Restore store lookup cache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: .cache
           key: stores-cache-${{ github.run_id }}
@@ -76,6 +76,16 @@ jobs:
           SHEET_ID: ${{ secrets.SHEET_ID }}
           MAX_PLACE_CALLS: '400'
         run: pnpm fetch-stores
+
+      # 儲存必須與還原分開,而且要緊接在反查之後:actions/cache 的 post step 在 job
+      # 失敗時**不會執行**,所以用合併版時,任何後續步驟(lint、測試、build)失敗都會
+      # 讓這次已經花掉的 API 呼叫連快取都沒留下,下次重跑再花一次。
+      - name: Save store lookup cache
+        if: always() && hashFiles('.cache/**') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: .cache
+          key: stores-cache-${{ github.run_id }}
 
       - name: Format check
         run: pnpm format:check
