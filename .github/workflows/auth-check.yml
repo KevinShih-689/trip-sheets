@@ -67,11 +67,14 @@ jobs:
           MAX_PLACE_CALLS: '400'
         run: pnpm fetch-stores
 
-      # 儲存必須與還原分開,而且要緊接在反查之後:actions/cache 的 post step 在 job
-      # 失敗時**不會執行**,所以用合併版時,任何後續步驟(lint、測試、build)失敗都會
-      # 讓這次已經花掉的 API 呼叫連快取都沒留下,下次重跑再花一次。
+      # 只有 full 模式才可能產生新快取 —— check 走的是 dry-run,在 writeCache 之前就
+      # 返回,存回去只是把還原進來的內容用新 key 複製一份。
+      #
+      # 但 full 模式要保留 always():fetch-stores 是先 writeCache 再組 stores.json,
+      # 所以「反查全部成功、快取已寫入,卻在後面的 schema 驗證失敗」時,那份新快取
+      # 仍然有價值,不該隨著步驟失敗一起丟掉。
       - name: Save store lookup cache
-        if: always() && hashFiles('.cache/**') != ''
+        if: always() && inputs.mode == 'full' && hashFiles('.cache/**') != ''
         uses: actions/cache/save@v4
         with:
           path: .cache
