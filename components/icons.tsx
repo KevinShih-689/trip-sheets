@@ -112,3 +112,12 @@ export function CrosshairIcon(props: IconProps): React.JSX.Element {
     </Svg>
   );
 }
+
+/** 關閉:叉 */
+export function CloseIcon(props: IconProps): React.JSX.Element {
+  return (
+    <Svg {...props}>
+      <path d="M6 6l12 12M18 6L6 18" />
+    </Svg>
+  );
+}

@@ -13,8 +13,21 @@ import type { LatLng, Store } from '@/lib/types';
 
 export const GEO_FAILURE_NOTICE = '無法取得位置,改用區域中心';
 
-/** 提示訊息的顯示時間(ms);短暫出現後自動消失,不需使用者關閉 */
-const NOTICE_MS = 4000;
+/**
+ * 一次搜尋是被什麼觸發的。措辭交給 view 層決定(它才知道當日區域名),
+ * 這裡只回報「發生了什麼」:
+ *  - `enter`     進入推薦 Tab 的重置 —— 使用者沒改任何東西,不該提示
+ *  - `type`      切換類型
+ *  - `mode`      切換目前位置模式(成功)
+ *  - `geo-error` 取得位置失敗,已退回區域中心 —— 只出失敗那一則,
+ *                不可再補一則「改用區域中心 5km」,否則同一件事說兩次
+ */
+export type SearchReason = 'enter' | 'type' | 'mode' | 'geo-error';
+
+export interface SearchTrigger {
+  readonly token: number;
+  readonly reason: SearchReason;
+}
 
 export interface UseSuggestions {
   readonly type: StoreTypeKey;
@@ -23,7 +36,8 @@ export interface UseSuggestions {
   readonly searchMode: boolean;
   readonly toggleSearchMode: () => void;
   readonly loading: boolean;
-  readonly notice: string | null;
+  /** 最後一次搜尋的觸發來源;token 每次搜尋 +1,供 view 層驅動提示 */
+  readonly lastSearch: SearchTrigger;
   readonly results: readonly SuggestedStore[];
   /**
    * 目前選取(= 定錨 + 展開)的結果索引;-1 = 未選取,地圖停在基準錨。
@@ -53,11 +67,15 @@ export function useSuggestions(
   const [type, setTypeState] = useState<StoreTypeKey>(DEFAULT_STORE_TYPE);
   const [searchMode, setSearchMode] = useState(false);
   const [deviceCenter, setDeviceCenter] = useState<LatLng | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedIndex, setSelectedIndex] = useState(-1);
-  // 每次搜尋觸發時 +1,驅動 skeleton 與選取重置
-  const [searchToken, setSearchToken] = useState(0);
+  // token 每次搜尋 +1,驅動 skeleton、選取重置與提示
+  const [lastSearch, setLastSearch] = useState<SearchTrigger>({ token: 0, reason: 'enter' });
+  const searchToken = lastSearch.token;
+
+  const triggerSearch = useCallback((reason: SearchReason): void => {
+    setLastSearch((current) => ({ token: current.token + 1, reason }));
+  }, []);
 
   const center = searchMode ? deviceCenter : areaCenter;
   const radiusKm = searchMode ? GEO_RADIUS_KM : AREA_RADIUS_KM;
@@ -80,33 +98,25 @@ export function useSuggestions(
     };
   }, [searchToken]);
 
-  useEffect(() => {
-    if (notice === null) return;
-    const timer = setTimeout(() => {
-      setNotice(null);
-    }, NOTICE_MS);
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [notice]);
-
-  const setType = useCallback((next: StoreTypeKey): void => {
-    setTypeState(next);
-    setSearchToken((n) => n + 1);
-  }, []);
+  const setType = useCallback(
+    (next: StoreTypeKey): void => {
+      setTypeState(next);
+      triggerSearch('type');
+    },
+    [triggerSearch],
+  );
 
   const toggleSearchMode = useCallback((): void => {
     // 關閉:直接退回區域中心,不需要權限
     if (searchMode) {
       setSearchMode(false);
-      setSearchToken((n) => n + 1);
+      triggerSearch('mode');
       return;
     }
 
     const failToAreaCenter = (): void => {
       setSearchMode(false);
-      setNotice(GEO_FAILURE_NOTICE);
-      setSearchToken((n) => n + 1);
+      triggerSearch('geo-error');
     };
 
     if (typeof navigator === 'undefined' || !navigator.geolocation) {
@@ -121,13 +131,12 @@ export function useSuggestions(
           lng: position.coords.longitude,
         });
         setSearchMode(true);
-        setNotice(null);
-        setSearchToken((n) => n + 1);
+        triggerSearch('mode');
       },
       failToAreaCenter,
       { timeout: GEOLOCATION_TIMEOUT_MS, maximumAge: 60_000 },
     );
-  }, [searchMode]);
+  }, [searchMode, triggerSearch]);
 
   const select = useCallback((index: number): void => {
     // 點擊 = 選取(定錨 + 展開),再點同一筆 = 取消選取(收合 + 回基準錨)
@@ -137,10 +146,9 @@ export function useSuggestions(
   const reset = useCallback((): void => {
     setTypeState(DEFAULT_STORE_TYPE);
     setSearchMode(false);
-    setNotice(null);
-    // searchToken 前進即重播 skeleton 並清除選取
-    setSearchToken((n) => n + 1);
-  }, []);
+    // token 前進即重播 skeleton 並清除選取
+    triggerSearch('enter');
+  }, [triggerSearch]);
 
   return {
     type,
@@ -148,7 +156,7 @@ export function useSuggestions(
     searchMode,
     toggleSearchMode,
     loading,
-    notice,
+    lastSearch,
     results,
     selectedIndex,
     select,

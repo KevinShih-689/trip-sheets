@@ -912,21 +912,69 @@ a:hover {
 }
 
 /* 定位失敗提示 */
-.sugg-notice {
+/* ── 搜尋條件提示 ──
+   Mobile 底部置中,並墊高到浮動控制列之上。陣列是「舊 → 新」,用一般的 column
+   讓最新的一則落在最底下 —— 它永遠出現在同一個位置,舊的被往上推然後消失。 */
+.toast-stack {
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
   bottom: calc(var(--tabbar-h) + 78px + env(safe-area-inset-bottom));
   z-index: 95;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: max-content;
   max-width: min(90vw, 380px);
-  padding: 10px 16px;
+  pointer-events: none;
+}
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 8px 9px 14px;
   border-radius: 10px;
   background: var(--surface2);
   border: 1px solid var(--line);
   color: var(--text);
   font-size: 12.5px;
-  text-align: center;
+  line-height: 1.4;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  pointer-events: auto;
+}
+.toast-text {
+  flex: 1;
+  min-width: 0;
+}
+.toast-close {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  color: var(--faint);
+  cursor: pointer;
+  transition: color 140ms ease;
+}
+.toast-close:hover {
+  color: var(--text);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .toast {
+    animation: toast-in 200ms ease-out both;
+  }
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (min-width: 1024px) {
@@ -963,8 +1011,12 @@ a:hover {
     position: sticky;
     top: 0;
   }
-  .sugg-notice {
-    left: calc(50% + 108px);
-    bottom: 88px;
+  /* Desktop 改靠右下:此處只有地圖,不會擋到清單或底部控制列 */
+  .toast-stack {
+    left: auto;
+    right: 28px;
+    bottom: 24px;
+    transform: none;
+    align-items: flex-end;
   }
 }
