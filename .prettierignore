@@ -17,6 +17,10 @@ doc/
 graphify-out/
 public/sw.js
 
+# google-github-actions/auth 在 workspace 根目錄寫下的短期憑證設定檔。
+# 它是 ADC 的來源(不能不產生),但不是原始碼,也絕不該進版控。
+gha-creds-*.json
+
 # Agent harness 設定:非專案原始碼,且部分檔案不是合法 YAML
 .agents/
 .claude/
