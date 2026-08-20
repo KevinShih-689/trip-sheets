@@ -195,6 +195,11 @@ Store suggestions come from a Google Maps saved list, which **has no API** — s
 3. Paste its contents — **including the header row** — into the spreadsheet's **店家清單** tab.
 4. Rebuild. Rows that fail the lookup are listed in the build log; fix them with the optional **地址覆寫** column.
 
+> Takeout exports 標題 / 筆記 / 網址 / 標籤 / 留言 — **no address**. Lookups therefore match on
+> the place name plus a location bias around the trip's areas, which is usually enough because
+> Takeout titles carry the branch name. Generic names are the ones that miss; adding a
+> **地址覆寫** column and filling it for those rows re-queries them on the next build.
+
 > Takeout only exports lists **you** created. A list someone shared with you has to be exported by its owner.
 
 ---
