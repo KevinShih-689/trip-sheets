@@ -13,6 +13,8 @@ import {
 
 const HEADER_ZH: Row = ['店名', '備註', 'Maps URL', '地址', '地址覆寫'];
 const HEADER_TAKEOUT: Row = ['Title', 'Note', 'URL', 'Address'];
+/** Google Takeout 中文匯出的真實表頭 —— 注意沒有地址欄 */
+const HEADER_TAKEOUT_ZH: Row = ['標題', '筆記', '網址', '標籤', '留言'];
 
 function place(overrides: Partial<PlaceResult> = {}): PlaceResult {
   return {
@@ -97,6 +99,40 @@ describe('parseStoreRows — 以表頭辨識欄位', () => {
 
   it('throws when the tab is empty', () => {
     expect(() => parseStoreRows('店家清單', [])).toThrow(SheetSchemaError);
+  });
+  it('parses the real Chinese Takeout export, which has no address column', () => {
+    const rows: Row[] = [
+      HEADER_TAKEOUT_ZH,
+      ['一蘭 道頓堀店', '深夜也開', 'https://maps.app.goo.gl/a', '美食', '想去'],
+    ];
+    expect(parseStoreRows('店家清單', rows)).toEqual([
+      {
+        name: '一蘭 道頓堀店',
+        note: '深夜也開',
+        mapsUrl: 'https://maps.app.goo.gl/a',
+        address: '',
+        addressOverride: '',
+      },
+    ]);
+  });
+
+  it('ignores 標籤 and 留言 rather than misreading them as known columns', () => {
+    const rows: Row[] = [
+      HEADER_TAKEOUT_ZH,
+      ['店A', '筆記內容', 'https://x', '標籤內容', '留言內容'],
+    ];
+    const [row] = parseStoreRows('店家清單', rows);
+    expect(row?.note).toBe('筆記內容');
+    expect(row?.address).toBe('');
+  });
+
+  it('still picks up 地址覆寫 when the user adds it to a Takeout export', () => {
+    const rows: Row[] = [
+      [...HEADER_TAKEOUT_ZH, '地址覆寫'],
+      ['店A', '', 'https://x', '', '', '大阪市中央区難波1-1-1'],
+    ];
+    const [row] = parseStoreRows('店家清單', rows);
+    expect(row?.addressOverride).toBe('大阪市中央区難波1-1-1');
   });
 });
 

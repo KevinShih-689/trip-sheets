@@ -36,11 +36,18 @@ export interface PlaceResult {
   readonly mapsUri: string;
 }
 
-/** 表頭別名:Takeout CSV 原文(英文)與使用者改寫的中文皆可辨識 */
+/**
+ * 表頭別名。涵蓋三種來源:Google Takeout 的中文匯出(標題/筆記/網址/標籤/留言)、
+ * 英文匯出(Title/Note/URL/…),以及使用者自行改寫的欄名。
+ *
+ * 注意 Takeout **不匯出地址** —— 中文匯出只有上述五欄。地址因此是選填,缺漏時
+ * Text Search 只以店名查詢(見 `storeSearchQuery`);要提高命中率就手動補
+ * 「地址覆寫」欄。「標籤」與「留言」用不到,未列入別名即自動忽略。
+ */
 const COLUMN_ALIASES = {
-  name: ['店名', '名稱', 'title', 'name'],
-  note: ['備註', '註記', 'note', 'comment'],
-  mapsUrl: ['maps url', '連結', 'url', 'link'],
+  name: ['店名', '名稱', '標題', 'title', 'name'],
+  note: ['備註', '註記', '筆記', 'note', 'comment'],
+  mapsUrl: ['maps url', '網址', '連結', 'url', 'link'],
   address: ['地址', 'address'],
   addressOverride: ['地址覆寫', 'address override'],
 } as const satisfies Record<keyof StoreRow, readonly string[]>;
