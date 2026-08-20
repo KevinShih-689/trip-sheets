@@ -31,7 +31,8 @@ If you add or change Backlog parsing, keep all three in place.
 ### 2. Credentials
 
 - The Google **service account** has **Viewer** access to a single spreadsheet and **no GCP/IAM roles** — least privilege.
-- The service-account JSON key lives only in the `GOOGLE_SERVICE_ACCOUNT_KEY` GitHub Secret. It must **never** be committed. `.gitignore` blocks `*service-account*.json`, `*sa-key*.json`, and `.env*`.
+- **The service account has no key.** CI authenticates through Workload Identity Federation: GitHub's OIDC identity is exchanged for a token that expires in about an hour, and GCP only accepts that exchange from this repository. There is no long-lived Google credential in GitHub Secrets, on any laptop, or in the repo — so there is nothing to rotate and nothing to leak. `.gitignore` still blocks `*service-account*.json`, `*sa-key*.json`, and `.env*` in case one is ever created by mistake.
+- The same federated token authorises the Places and Geocoding calls, so the build-time Maps API key is gone too. Daily quota caps on both APIs remain the cost control — federation limits who can call, not how much.
 - `deploy.yml` (which reads secrets) only runs on `main` / `workflow_dispatch` / `cron`. `ci.yml` runs on PRs **without secrets**, using committed sample data — so fork PRs can never exfiltrate secrets.
 
 ### 3. Public-by-design values

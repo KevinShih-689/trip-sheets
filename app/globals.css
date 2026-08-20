@@ -113,11 +113,7 @@ a:hover {
 .splash-pfill {
   height: 100%;
   width: 100%;
-  background: repeating-linear-gradient(
-    90deg,
-    var(--yellow) 0 12px,
-    #e0ba00 12px 16px
-  );
+  background: repeating-linear-gradient(90deg, var(--yellow) 0 12px, #e0ba00 12px 16px);
   border-radius: 1px;
 }
 
@@ -135,7 +131,7 @@ a:hover {
     animation: pload 1.2s steps(12) forwards;
   }
   .ldots::after {
-    content: "";
+    content: '';
     animation: ldots 1.2s steps(4) infinite;
   }
 }
@@ -191,16 +187,16 @@ a:hover {
 }
 @keyframes ldots {
   0% {
-    content: "";
+    content: '';
   }
   25% {
-    content: ".";
+    content: '.';
   }
   50% {
-    content: "..";
+    content: '..';
   }
   75% {
-    content: "...";
+    content: '...';
   }
 }
 
@@ -228,11 +224,7 @@ a:hover {
 
 /* ── 地圖 placeholder 條紋(離線/載入失敗 fallback)── */
 .map-stripes {
-  background: repeating-linear-gradient(
-    45deg,
-    #1a1d28 0 10px,
-    #171a24 10px 20px
-  );
+  background: repeating-linear-gradient(45deg, #1a1d28 0 10px, #171a24 10px 20px);
 }
 .map-pin {
   width: 10px;
@@ -548,16 +540,18 @@ a:hover {
   }
   .day-grid {
     display: grid;
-    grid-template-columns: 1fr 300px;
+    grid-template-columns: 1fr 380px;
     gap: 20px;
-    padding: 0 28px 24px;
+    /* 底部淨空給浮動控制列:整張卡收在控制列上方,而非讓卡內留白 */
+    padding: 0 28px 92px;
     align-items: start;
     flex: 1;
     min-height: 0;
   }
-  /* align-self 需蓋掉 .panel-desktop 的 start,才能撐滿列高供內層捲動 */
+  /* 清單卡高度隨內容,長到可視高度為止就換成卡內捲動(推薦 Tab 的清單同一套規則) */
   .day-timeline {
-    align-self: stretch;
+    align-self: start;
+    max-height: 100%;
     display: flex;
     flex-direction: column;
     min-height: 0;
@@ -580,16 +574,16 @@ a:hover {
     overflow-y: auto;
     scrollbar-width: thin;
   }
-  /* 摘要欄自身捲動時,面板(尤其固定高度的迷你地圖)不可被壓縮 */
+  /* 摘要欄自身捲動時,摘要與 TODO 卡不可被壓縮 */
   .day-rail > * {
     flex: none;
   }
-  /* desktop 詳細常駐展開,不套用 mobile 的展開動畫 */
-  .icard-detail {
-    display: block;
-    opacity: 1;
-    visibility: visible;
-    transition: none;
+  /* 定錨地圖吃掉摘要欄剩下的高度,與推薦 Tab 的地圖同一個量級 */
+  .day-rail-map {
+    width: 100%;
+    flex: 1 1 auto;
+    min-height: 340px;
+    position: relative;
   }
 
   /* 行前:機票|USJ 兩欄,住宿/民宿整寬水平擴展 */
@@ -598,7 +592,7 @@ a:hover {
     grid-template-columns: 1fr 1fr;
     gap: 0 20px;
     padding: 0 28px 24px;
-    grid-template-areas: "flights usj" "stay stay" "bnb bnb";
+    grid-template-areas: 'flights usj' 'stay stay' 'bnb bnb';
     align-items: start;
   }
   .bl-flights {
@@ -622,5 +616,355 @@ a:hover {
   .bl-grid .sec-title {
     padding-left: 16px;
     padding-right: 16px;
+  }
+}
+
+/* ══════════ 推薦 Tab(spec §4)══════════ */
+
+/* ── Liquid glass(spec §4.7)──
+   基底是所有瀏覽器都吃的 CSS 毛玻璃;Chromium 另外套 SVG 折射濾鏡。
+   iOS Safari 不支援 backdrop-filter: url(),會停在基底版本(已知限制)。 */
+.lg-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.lg {
+  background: rgba(235, 240, 255, 0.07);
+  border: 1px solid rgba(235, 240, 255, 0.16);
+  backdrop-filter: blur(14px) saturate(1.6);
+  -webkit-backdrop-filter: blur(14px) saturate(1.6);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.22),
+    0 8px 26px rgba(0, 0, 0, 0.38);
+}
+@supports (backdrop-filter: url('#lg-refract')) {
+  .lg {
+    backdrop-filter: url('#lg-refract') blur(11px) saturate(1.7);
+  }
+}
+
+/* Mobile 行程清單與「當日預估花費」同樣要避開浮動控制列(比照 .sugg-list)。
+   Desktop 的淨空由 .day-grid 的 padding 負責,卡片內不留空帶,故限定 mobile。 */
+@media (max-width: 1023.98px) {
+  .day-timeline {
+    padding-bottom: 92px;
+  }
+}
+
+/* ── 底部控制列:切換鈕 + 類型 Avatar ── */
+.day-controls {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(var(--tabbar-h) + 14px + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  /* 間距由 Avatar 自己的 margin 負責:gap 在 Avatar 收起後仍會佔位,
+     切換鈕就無法真正回到置中(見 .type-avatar-root) */
+  z-index: 90;
+}
+.day-switch {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px;
+  border-radius: 999px;
+}
+/* 選取態滑塊:兩個按鈕等寬(同為兩字 + 同 min-width),故寬度取內容區的一半。
+   14px = 左右 padding 5×2 + 按鈕間距 4 */
+.day-switch-thumb {
+  position: absolute;
+  top: 5px;
+  bottom: 5px;
+  left: 5px;
+  width: calc((100% - 14px) / 2);
+  border-radius: 999px;
+  background: rgba(235, 240, 255, 0.1);
+  border: 1px solid rgba(235, 240, 255, 0.28);
+  transition: transform 320ms cubic-bezier(0.34, 1.24, 0.5, 1);
+}
+.day-switch-thumb.end {
+  transform: translateX(calc(100% + 4px));
+}
+.day-switch-btn {
+  position: relative;
+  z-index: 1;
+  min-width: 88px;
+  min-height: 40px;
+  padding: 0 18px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--dim);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: color 200ms ease;
+}
+.day-switch-btn.on {
+  color: var(--text);
+}
+
+/* ── 類型 Avatar:平時一顆,展開時其餘類型往上疊 ── */
+/* Avatar 進出:寬度與外距一起收合,控制列因此變窄。
+   控制列是 translateX(-50%) 置中的,寬度變化會讓切換鈕平順地左右位移 ——
+   「Avatar 出現、切換鈕讓位」是同一個 transition 的兩面,不需各自驅動。 */
+.type-avatar-root {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 50px;
+  margin-left: 12px;
+  transform-origin: left center;
+  transition:
+    width 320ms cubic-bezier(0.34, 1.24, 0.5, 1),
+    margin-left 320ms cubic-bezier(0.34, 1.24, 0.5, 1),
+    transform 260ms cubic-bezier(0.34, 1.24, 0.5, 1),
+    opacity 200ms ease;
+}
+.type-avatar-root.off {
+  width: 0;
+  margin-left: 0;
+  opacity: 0;
+  transform: scale(0.5);
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .day-switch-thumb,
+  .type-avatar-root {
+    transition: none;
+  }
+}
+.type-avatar {
+  flex: none;
+  width: 50px;
+  height: 50px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--dim);
+  cursor: pointer;
+  transition:
+    color 160ms ease,
+    transform 160ms ease;
+}
+.type-avatar.on {
+  color: var(--text);
+}
+.type-avatar:hover {
+  color: var(--text);
+  transform: translateY(-1px);
+}
+.type-avatar-menu {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 0;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 10px;
+}
+/* 選單列出全部五類,目前類型必須一眼可辨(spec §4.5),否則五顆 icon 難以分辨 */
+.type-avatar-menu > .type-avatar.on {
+  color: var(--yellow);
+  border-color: var(--yellow);
+  box-shadow: 0 0 0 3px rgba(251, 208, 0, 0.16);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .type-avatar-menu > .type-avatar {
+    animation: avatar-pop 180ms ease-out both;
+  }
+  .type-avatar-menu > .type-avatar:nth-child(2) {
+    animation-delay: 40ms;
+  }
+  .type-avatar-menu > .type-avatar:nth-child(3) {
+    animation-delay: 80ms;
+  }
+  .type-avatar-menu > .type-avatar:nth-child(4) {
+    animation-delay: 120ms;
+  }
+  .type-avatar-menu > .type-avatar:nth-child(5) {
+    animation-delay: 160ms;
+  }
+}
+@keyframes avatar-pop {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.86);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ── Header 目前位置按鈕 ── */
+.loc-toggle {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--dim);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  cursor: pointer;
+  transition:
+    color 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease;
+}
+.loc-toggle:hover {
+  color: var(--text);
+}
+/* 開啟狀態必須一眼可辨(spec §4.5) */
+.loc-toggle.on {
+  color: #12141d;
+  background: var(--yellow);
+  border-color: var(--yellow);
+  box-shadow: 0 0 0 4px rgba(251, 208, 0, 0.16);
+}
+
+/* ── 推薦內容:mobile 上地圖下清單,清單自體捲動 ── */
+.sugg-root {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+.sugg-map {
+  flex: none;
+  height: 200px;
+  position: relative;
+  overflow: hidden;
+}
+.map-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 100%;
+}
+.map-placeholder-text {
+  font-family: var(--font-plex), monospace;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--faint);
+}
+.sugg-list {
+  border-top: 1px solid var(--line);
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* 店家詳細:展開動畫同行程卡,但 desktop 不常駐展開(清單會過長) */
+.sdetail {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    grid-template-rows 220ms cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 160ms ease,
+    visibility 220ms;
+}
+.sdetail.open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  visibility: visible;
+}
+.sdetail-body {
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* 搜尋 skeleton */
+.skel {
+  border-radius: 4px;
+  background: linear-gradient(
+    90deg,
+    rgba(235, 240, 255, 0.06) 0%,
+    rgba(235, 240, 255, 0.13) 50%,
+    rgba(235, 240, 255, 0.06) 100%
+  );
+  background-size: 200% 100%;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .skel {
+    animation: skel-shimmer 1.1s ease-in-out infinite;
+  }
+}
+@keyframes skel-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* 定位失敗提示 */
+.sugg-notice {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(var(--tabbar-h) + 78px + env(safe-area-inset-bottom));
+  z-index: 95;
+  max-width: min(90vw, 380px);
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: var(--surface2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font-size: 12.5px;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+@media (min-width: 1024px) {
+  /* 控制列扣掉左側導覽欄寬度才會置中於內容區 */
+  .day-controls {
+    left: calc(50% + 108px);
+    bottom: 24px;
+  }
+
+  /* 推薦:左清單 + 右地圖(spec §4.6)。地圖 sticky,清單自體捲動。 */
+  .sugg-root {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 20px;
+    padding: 0 28px 24px;
+    align-items: start;
+    flex: 1;
+    min-height: 0;
+  }
+  .sugg-root .sugg-list {
+    order: -1;
+    border-top: none;
+    /* 高度隨內容,長到可視高度為止就換成卡內捲動(行程 Tab 的清單同一套規則) */
+    align-self: start;
+    max-height: 100%;
+    scrollbar-width: thin;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+  }
+  .sugg-map {
+    height: 52dvh;
+    min-height: 340px;
+    position: sticky;
+    top: 0;
+  }
+  .sugg-notice {
+    left: calc(50% + 108px);
+    bottom: 88px;
   }
 }

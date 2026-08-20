@@ -7,36 +7,42 @@ import type { ItineraryItem } from '@/lib/types';
 
 interface ItineraryCardProps {
   item: ItineraryItem;
-  /** 是否展開;由 ItineraryList 統一控管,確保一次只開一筆 */
-  open: boolean;
-  /** mobile 才可點擊展開;desktop 詳細常駐展開,header 不呈現為可點按 */
-  interactive: boolean;
+  /** 選取 = 展開詳細(desktop 另外定錨右欄地圖);由上層統一控管,確保一次只開一筆 */
+  selected: boolean;
   onToggle: () => void;
 }
 
-/** 行程列:mobile 點擊展開;desktop(≥1024)詳細常駐展開,header 不呈現為可點按 */
-export function ItineraryCard({ item, open, interactive, onToggle }: ItineraryCardProps): React.JSX.Element {
+/** 行程列:點擊展開詳細,desktop 同時定錨右欄地圖(spec §4.6) */
+export function ItineraryCard({ item, selected, onToggle }: ItineraryCardProps): React.JSX.Element {
   const needsAttention = item.reservationStatus === '待預約' || item.reservationStatus === '候補中';
 
   return (
     <Box>
       <Flex
-        as={interactive ? 'button' : 'div'}
+        as="button"
         w="100%"
         textAlign="left"
         gap="14px"
         px="20px"
         py="13px"
         minH="44px"
-        cursor={interactive ? 'pointer' : undefined}
-        onClick={interactive ? onToggle : undefined}
-        aria-expanded={interactive ? open : undefined}
+        cursor="pointer"
+        onClick={onToggle}
+        aria-expanded={selected}
       >
-        <Box fontFamily="mono" fontSize="12px" lineHeight="1.5" fontWeight="500" color="pixel.yellow" w="46px" flexShrink={0}>
+        <Box
+          fontFamily="mono"
+          fontSize="12px"
+          lineHeight="1.5"
+          fontWeight="500"
+          color="pixel.yellow"
+          w="46px"
+          flexShrink={0}
+        >
           {item.timeSlot}
         </Box>
         <Box flex="1">
-          <Box fontSize="14px" fontWeight="500">
+          <Box fontSize="14px" fontWeight="500" color={selected ? 'pixel.yellow' : undefined}>
             {item.name}
           </Box>
           <Box fontSize="11.5px" color="pixel.faint" mt="2px">
@@ -53,7 +59,7 @@ export function ItineraryCard({ item, open, interactive, onToggle }: ItineraryCa
           </Box>
         ) : (
           <Box
-            className={open ? 'only-mobile icard-toggle open' : 'only-mobile icard-toggle'}
+            className={selected ? 'icard-toggle open' : 'icard-toggle'}
             color="pixel.faint"
             alignSelf="center"
             aria-hidden="true"
@@ -63,7 +69,7 @@ export function ItineraryCard({ item, open, interactive, onToggle }: ItineraryCa
 
       {/* 三層結構是展開動畫的必要條件:外層只負責 grid-template-rows 0fr→1fr 過場,
           中層 overflow: hidden 做裁切,內層才帶面板外觀(否則收合時 padding/border 會留殘影) */}
-      <Box className={open ? 'icard-detail open' : 'icard-detail'}>
+      <Box className={selected ? 'icard-detail open' : 'icard-detail'}>
         <Box className="icard-detail-body">
           <Box
             bg="pixel.surface"
@@ -87,7 +93,11 @@ export function ItineraryCard({ item, open, interactive, onToggle }: ItineraryCa
               )}
             </DetailRow>
             <DetailRow label="預約">
-              {item.reservationStatus ? <Tag variant={statusVariant(item.reservationStatus)}>{item.reservationStatus}</Tag> : '-'}
+              {item.reservationStatus ? (
+                <Tag variant={statusVariant(item.reservationStatus)}>{item.reservationStatus}</Tag>
+              ) : (
+                '-'
+              )}
             </DetailRow>
             {item.note && (
               <DetailRow label="備註">
@@ -98,7 +108,10 @@ export function ItineraryCard({ item, open, interactive, onToggle }: ItineraryCa
             )}
             <DetailRow label="地圖">
               <a
-                href={item.link ?? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${item.name} ${item.area}`)}`}
+                href={
+                  item.link ??
+                  `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${item.name} ${item.area}`)}`
+                }
                 target="_blank"
                 rel="noreferrer"
               >
@@ -112,7 +125,13 @@ export function ItineraryCard({ item, open, interactive, onToggle }: ItineraryCa
   );
 }
 
-function DetailRow({ label, children }: { label: string; children: React.ReactNode }): React.JSX.Element {
+function DetailRow({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}): React.JSX.Element {
   return (
     <Flex gap="12px" fontSize="12.5px" py="4px">
       <Box color="pixel.faint" w="58px" flexShrink={0}>

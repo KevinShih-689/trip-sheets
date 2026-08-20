@@ -39,6 +39,9 @@ jobs:
       - name: Seed sample data
         run: pnpm fetch-sheet:sample
 
+      - name: Format check
+        run: pnpm format:check
+
       - name: Lint & type-check
         run: pnpm lint && pnpm type-check
 

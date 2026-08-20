@@ -1,9 +1,12 @@
 name: Deploy to GitHub Pages
 
 on:
-  workflow_dispatch: {}          # GitHub 手機 App 手動 rebuild(主要更新路徑)
+  workflow_dispatch: {} # GitHub 手機 App 手動 rebuild(主要更新路徑)
   schedule:
-    - cron: '0 21 * * *'         # 每日 UTC 21:00 = 台灣 05:00 自動兜底
+    # 每週日 UTC 21:00 = 台灣週一 05:00 自動兜底。
+    # 排程只是兜底,Sheet 改完要立刻上線請用 workflow_dispatch 手動觸發。
+    # 頻率壓到每週也讓 fetch-stores 的 API 用量遠離免費額度上限(每月僅 4–5 次)。
+    - cron: '0 21 * * 0'
   push:
     branches: [main]
 
@@ -39,11 +42,43 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # 以 GitHub 的 OIDC 身分換取短期 Google 憑證(約 1 小時),CI 不再持有任何
+      # 長期私鑰。可換取的對象在 GCP 端以 attribute-condition 限定為本 repo。
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
       - name: Fetch sheet data
         env:
-          GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
           SHEET_ID: ${{ secrets.SHEET_ID }}
         run: pnpm fetch-sheet
+
+      # Places/Geocoding 反查結果的快取:只有新增或修改過的店家才會真的打 API。
+      # 快取遺失只會讓這次 build 全量重查(仍在免費額度內),不影響正確性。
+      - name: Restore store lookup cache
+        uses: actions/cache@v4
+        with:
+          path: .cache
+          key: stores-cache-${{ github.run_id }}
+          restore-keys: stores-cache-
+
+      # 預檢:算出這次會打幾次計費 API 並寫進 job summary。超過 MAX_PLACE_CALLS
+      # 就在這裡中止 —— 此步驟本身不呼叫任何計費 API,所以中止時費用為零。
+      - name: Preflight store lookup usage
+        env:
+          SHEET_ID: ${{ secrets.SHEET_ID }}
+          MAX_PLACE_CALLS: '400'
+        run: pnpm fetch-stores:check
+
+      - name: Fetch store suggestions
+        env:
+          SHEET_ID: ${{ secrets.SHEET_ID }}
+          MAX_PLACE_CALLS: '400'
+        run: pnpm fetch-stores
+
+      - name: Format check
+        run: pnpm format:check
 
       - name: Lint & type-check
         run: pnpm lint && pnpm type-check

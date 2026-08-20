@@ -1,0 +1,120 @@
+{
+  "generatedAt": "2026-08-12T00:00:00.000Z",
+  "stores": [
+    {
+      "name": "一蘭 道頓堀店",
+      "note": "深夜也開,半自助點餐",
+      "address": "日本〒542-0071 大阪府大阪市中央区道頓堀1-4-16",
+      "lat": 34.6687,
+      "lng": 135.5019,
+      "types": ["restaurant", "food"],
+      "mapsUri": "https://maps.google.com/?cid=1000000000000000001"
+    },
+    {
+      "name": "千日前 はり重",
+      "note": "炸牛排三明治外帶",
+      "address": "日本〒542-0075 大阪府大阪市中央区難波3-1-14",
+      "lat": 34.6659,
+      "lng": 135.5015,
+      "types": ["restaurant", "meal_takeaway", "food"],
+      "mapsUri": "https://maps.google.com/?cid=1000000000000000002"
+    },
+    {
+      "name": "難波 丸福珈琲店",
+      "note": "早餐鬆餅",
+      "address": "日本〒542-0076 大阪府大阪市中央区難波千日前12-35",
+      "lat": 34.664,
+      "lng": 135.5027,
+      "types": ["cafe", "bakery", "food"],
+      "mapsUri": "https://maps.google.com/?cid=1000000000000000003"
+    },
+    {
+      "name": "なんばパークス",
+      "note": "雨天備案",
+      "address": "日本〒556-0011 大阪府大阪市浪速区難波中2-10-70",
+      "lat": 34.6605,
+      "lng": 135.5019,
+      "types": ["shopping_mall", "store"],
+      "mapsUri": "https://maps.google.com/?cid=1000000000000000004"
+    },
+    {
+      "name": "法善寺横丁",
+      "note": "夜晚散步",
+      "address": "日本〒542-0076 大阪府大阪市中央区難波1-2-16",
+      "lat": 34.6675,
+      "lng": 135.5031,
+      "types": ["tourist_attraction", "place_of_worship"],
+      "mapsUri": "https://maps.google.com/?cid=1000000000000000005"
+    },
+    {
+      "name": "たこ焼き わなか 千日前本店",
+      "note": "排隊約 10 分鐘",
+      "address": "日本〒542-0075 大阪府大阪市中央区難波千日前11-19",
+      "lat": 34.6647,
+      "lng": 135.5036,
+      "types": ["restaurant", "meal_takeaway"],
+      "mapsUri": "https://maps.google.com/?cid=1000000000000000006"
+    },
+    {
+      "name": "% ARABICA 京都 東山",
+      "note": "外帶拿鐵,人潮多",
+      "address": "日本〒605-0853 京都府京都市東山区星野町87-5",
+      "lat": 34.9985,
+      "lng": 135.7807,
+      "types": ["cafe", "food"],
+      "mapsUri": "https://maps.google.com/?cid=1000000000000000007"
+    },
+    {
+      "name": "錦市場",
+      "note": "邊走邊吃",
+      "address": "日本〒604-8054 京都府京都市中京区西大文字町609",
+      "lat": 35.005,
+      "lng": 135.7649,
+      "types": ["tourist_attraction", "store", "food"],
+      "mapsUri": "https://maps.google.com/?cid=1000000000000000008"
+    },
+    {
+      "name": "京都 % 六角 うどん",
+      "note": "午餐備案",
+      "address": "日本〒604-8123 京都府京都市中京区六角町363",
+      "lat": 35.0068,
+      "lng": 135.7621,
+      "types": ["restaurant", "food"],
+      "mapsUri": "https://maps.google.com/?cid=1000000000000000009"
+    },
+    {
+      "name": "グランフロント大阪",
+      "note": "梅田逛街主場",
+      "address": "日本〒530-0011 大阪府大阪市北区大深町4-1",
+      "lat": 34.7055,
+      "lng": 135.4949,
+      "types": ["shopping_mall", "store"],
+      "mapsUri": "https://maps.google.com/?cid=1000000000000000010"
+    },
+    {
+      "name": "梅田 スカイビル 空中庭園",
+      "note": "傍晚上去看夜景",
+      "address": "日本〒531-6023 大阪府大阪市北区大淀中1-1-88",
+      "lat": 34.7053,
+      "lng": 135.4903,
+      "types": ["tourist_attraction", "museum"],
+      "mapsUri": "https://maps.google.com/?cid=1000000000000000011"
+    },
+    {
+      "name": "北極星 心斎橋本店",
+      "note": "蛋包飯創始店",
+      "address": "日本〒542-0083 大阪府大阪市中央区西心斎橋2-7-27",
+      "lat": 34.6707,
+      "lng": 135.4986,
+      "types": ["restaurant", "food"],
+      "mapsUri": "https://maps.google.com/?cid=1000000000000000012"
+    }
+  ],
+  "areaCenters": {
+    "難波": { "lat": 34.6659, "lng": 135.5016 },
+    "環球影城": { "lat": 34.6654, "lng": 135.4323 },
+    "京都": { "lat": 35.0116, "lng": 135.7681 },
+    "梅田": { "lat": 34.7025, "lng": 135.4959 },
+    "臨空城 → KIX": { "lat": 34.4103, "lng": 135.2969 }
+  }
+}

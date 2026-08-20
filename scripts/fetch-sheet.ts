@@ -3,12 +3,12 @@
  *
  * IO + CLI wrapper only. All parsing, header-drift validation, and sensitive-
  * field filtering live in `lib/parse-sheet.ts` (pure, unit-tested).
- * 需要環境變數 GOOGLE_SERVICE_ACCOUNT_KEY(JSON 字串)、SHEET_ID。
+ * 需要環境變數 SHEET_ID。憑證改由 ADC 提供:CI 以 Workload Identity Federation
+ * 取得短期 token,不再有任何長期私鑰。
  */
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { google } from 'googleapis';
-import { z } from 'zod';
 import { BACKLOG_TAB } from '../lib/constants';
 import { SheetSchemaError, buildTripData, type DayInput, type Row } from '../lib/parse-sheet';
 import { resolveDateTabs } from '../lib/sheet-tabs';
@@ -18,19 +18,24 @@ function fail(message: string): never {
   process.exit(1);
 }
 
+/**
+ * ADC 找不到憑證時丟出的原始訊息對人沒有任何指引,換成這個專案實際的兩條路。
+ */
+function explain(err: unknown): string {
+  const message = err instanceof Error ? err.message : String(err);
+  if (!message.includes('Could not load the default credentials')) return message;
+  return (
+    '找不到 Google 憑證(本機不再保留服務帳戶私鑰)。\n' +
+    '  → 本機開發:改用 `pnpm fetch-sheet:sample`\n' +
+    '  → 取得真實資料:在 GitHub 手動觸發 auth-check workflow'
+  );
+}
+
 async function main(): Promise<void> {
-  const keyJson = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
   const sheetId = process.env.SHEET_ID;
-  if (!keyJson) fail('缺少環境變數 GOOGLE_SERVICE_ACCOUNT_KEY');
   if (!sheetId) fail('缺少環境變數 SHEET_ID');
 
-  const credentialSchema = z.object({ client_email: z.string(), private_key: z.string() });
-  const parsedKey = credentialSchema.safeParse(JSON.parse(keyJson));
-  if (!parsedKey.success) fail('GOOGLE_SERVICE_ACCOUNT_KEY 不是合法的 service account JSON');
-
-  const auth = new google.auth.JWT({
-    email: parsedKey.data.client_email,
-    key: parsedKey.data.private_key,
+  const auth = new google.auth.GoogleAuth({
     scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
   });
   const sheets = google.sheets({ version: 'v4', auth });
@@ -94,5 +99,5 @@ async function main(): Promise<void> {
 }
 
 main().catch((err: unknown) => {
-  fail(err instanceof Error ? err.message : String(err));
+  fail(explain(err));
 });

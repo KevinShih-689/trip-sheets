@@ -3,7 +3,10 @@ import type {
   bnbCandidateSchema,
   flightSchema,
   itineraryItemSchema,
+  latLngSchema,
   roomSchema,
+  storeSchema,
+  storesFileSchema,
   tripDataSchema,
   tripDaySchema,
   tripMetaSchema,
@@ -18,3 +21,6 @@ export type Room = z.infer<typeof roomSchema>;
 export type UsjTicket = z.infer<typeof usjTicketSchema>;
 export type BnbCandidate = z.infer<typeof bnbCandidateSchema>;
 export type TripData = z.infer<typeof tripDataSchema>;
+export type LatLng = z.infer<typeof latLngSchema>;
+export type Store = z.infer<typeof storeSchema>;
+export type StoresFile = z.infer<typeof storesFileSchema>;

@@ -12,7 +12,13 @@ const STYLES: Record<TagVariant, { bg: string; color: string }> = {
 };
 
 /** 對應 Chakra Tag subtle variant 的定稿樣式(spec §4.4) */
-export function Tag({ variant = 'neutral', children }: { variant?: TagVariant; children: ReactNode }): React.JSX.Element {
+export function Tag({
+  variant = 'neutral',
+  children,
+}: {
+  variant?: TagVariant;
+  children: ReactNode;
+}): React.JSX.Element {
   const s = STYLES[variant];
   return (
     <Box

@@ -159,16 +159,21 @@ The SOP ends by producing the four values you'll paste as GitHub Secrets in step
 
 Repo → **Settings → Secrets and variables → Actions**:
 
-| Secret                        | Value                                                                |
-| ----------------------------- | -------------------------------------------------------------------- |
-| `GOOGLE_SERVICE_ACCOUNT_KEY`  | The full service-account JSON key                                    |
-| `SHEET_ID`                    | The ID between `/d/` and `/edit` in the spreadsheet URL              |
-| `NEXT_PUBLIC_GMAPS_EMBED_KEY` | Maps Embed API key (restrict by HTTP referrer to your Pages domain)  |
-| `NEXT_PUBLIC_SHEETS_URL`      | Public/edit URL of the sheet, used by the "open Google Sheets" links |
+| Secret                           | Value                                                                                           |
+| -------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `GCP_WORKLOAD_IDENTITY_PROVIDER` | Full resource name of the Workload Identity provider (see [setup SOP](doc/setup-sop.md) Part F) |
+| `GCP_SERVICE_ACCOUNT`            | Service-account email the workflow impersonates                                                 |
+| `SHEET_ID`                       | The ID between `/d/` and `/edit` in the spreadsheet URL                                         |
+| `NEXT_PUBLIC_GMAPS_EMBED_KEY`    | Maps Embed API key (restrict by HTTP referrer to your Pages domain)                             |
+| `NEXT_PUBLIC_SHEETS_URL`         | Public/edit URL of the sheet, used by the "open Google Sheets" links                            |
+
+> **There is no long-lived Google credential here.** The deploy exchanges GitHub's OIDC identity for a short-lived token via Workload Identity Federation, and GCP only honours that exchange for this repository. Nothing to rotate, nothing to leak.
+
+> The 推薦 tab still needs billing enabled on the GCP project — Places API (New) and Geocoding are billable services. Usage stays inside the free tier (lookups are cached; only new or edited rows call the API), so the actual bill is $0, but the card must be on file for the APIs to respond.
 
 Then set **Settings → Pages → Source = GitHub Actions**.
 
-> ⚠️ The service-account JSON key **must never be committed**. `.gitignore` already blocks `*service-account*.json`, `*sa-key*.json`, `.env*`, and the generated `data/trip-data.json`.
+> ⚠️ Do not create a JSON key for the service account. Federation makes it unnecessary, and a key that does not exist cannot be committed or leaked. `.gitignore` still blocks `*service-account*.json`, `*sa-key*.json`, `.env*`, and the generated `data/trip-data.json`.
 
 ### 4. Adjust the template for your trip
 
@@ -180,6 +185,17 @@ Then set **Settings → Pages → Source = GitHub Actions**.
 ### 5. Deploy
 
 Push to `main`, or run the **Deploy to GitHub Pages** workflow manually (`workflow_dispatch`) from the Actions tab or the GitHub mobile app. The site publishes to `https://<user>.github.io/<repo>/`.
+
+### 6. Keep the 推薦 tab in sync (only if you use it)
+
+Store suggestions come from a Google Maps saved list, which **has no API** — so refreshing them is a manual export ([ADR-0001](docs/adr/0001-store-suggestions-from-takeout-plus-places-enrichment.md)). Whenever you add places to the list:
+
+1. [Google Takeout](https://takeout.google.com) → **Deselect all** → tick only **Saved** (bookmark icon; _not_ "Maps" or "Maps (your places)").
+2. Unzip and open `Takeout/Saved/<list name>.csv`.
+3. Paste its contents — **including the header row** — into the spreadsheet's **店家清單** tab.
+4. Rebuild. Rows that fail the lookup are listed in the build log; fix them with the optional **地址覆寫** column.
+
+> Takeout only exports lists **you** created. A list someone shared with you has to be exported by its owner.
 
 ---
 
@@ -195,30 +211,36 @@ pnpm install
 
 # Option A — run against the committed sample data (no GCP needed)
 pnpm fetch-sheet:sample     # copies data/trip-data.sample.json → data/trip-data.json
+pnpm fetch-stores:sample    # copies data/stores.sample.json → data/stores.json
 pnpm dev
 
-# Option B — pull live data from your sheet
-export GOOGLE_SERVICE_ACCOUNT_KEY="$(cat /path/to/your-sa-key.json)"
-export SHEET_ID="your-sheet-id"
-pnpm fetch-sheet            # writes data/trip-data.json
 pnpm dev
 ```
+
+Sample data is the only local path: there are no credentials on your machine to
+pull live data with. To refresh from the real sheet, run the **Auth check**
+workflow (Actions → Auth check → Run workflow) with `mode: full` — it exercises
+the same scripts in CI, where the federated credentials live.
 
 Open http://localhost:3000.
 
 ### Scripts
 
-| Command                   | Description                                                             |
-| ------------------------- | ----------------------------------------------------------------------- |
-| `pnpm fetch-sheet`        | Enumerate date tabs + Backlog, validate, filter, write `trip-data.json` |
-| `pnpm fetch-sheet:sample` | Use the committed sample data instead of a live sheet                   |
-| `pnpm dev`                | Start the Next.js dev server                                            |
-| `pnpm build`              | Static export to `out/`                                                 |
-| `pnpm lint`               | ESLint (Next config)                                                    |
-| `pnpm type-check`         | `tsc --noEmit`                                                          |
-| `pnpm test`               | Run Vitest unit tests (data boundary)                                   |
-| `pnpm test:watch`         | Vitest in watch mode                                                    |
-| `pnpm test:coverage`      | Vitest with a coverage report                                           |
+| Command                    | Description                                                             |
+| -------------------------- | ----------------------------------------------------------------------- |
+| `pnpm fetch-sheet`         | Enumerate date tabs + Backlog, validate, filter, write `trip-data.json` |
+| `pnpm fetch-sheet:sample`  | Use the committed sample data instead of a live sheet                   |
+| `pnpm fetch-stores`        | Resolve the 店家清單 tab via Places API, write `stores.json`            |
+| `pnpm fetch-stores:sample` | Use the committed sample store data instead of a live lookup            |
+| `pnpm dev`                 | Start the Next.js dev server                                            |
+| `pnpm build`               | Static export to `out/`                                                 |
+| `pnpm lint`                | ESLint (Next config)                                                    |
+| `pnpm format`              | Prettier — rewrite files in place                                       |
+| `pnpm format:check`        | Prettier — fail if anything is unformatted (this is what CI runs)       |
+| `pnpm type-check`          | `tsc --noEmit`                                                          |
+| `pnpm test`                | Run Vitest unit tests (data boundary)                                   |
+| `pnpm test:watch`          | Vitest in watch mode                                                    |
+| `pnpm test:coverage`       | Vitest with a coverage report                                           |
 
 ---
 
@@ -239,7 +261,7 @@ sequenceDiagram
     GS-->>GA: raw rows
     GA->>GA: verify headers + zod parse + drop sensitive fields
     Note over GA: write data/trip-data.json<br/>(fetch failure → abort, no deploy)
-    GA->>GA: pnpm lint && pnpm type-check && pnpm test
+    GA->>GA: pnpm format:check && pnpm lint && pnpm type-check && pnpm test
     GA->>GA: pnpm build → out/
     GA->>GA: sensitive-field guard (grep PNR / 訂位代號 / 訂單編號)
     Note over GA: match found → fail job, no deploy
@@ -269,7 +291,7 @@ sequenceDiagram
 
 ## Contributing
 
-Issues and PRs are welcome. See the issue templates and PR checklist under [`.github/`](.github/). In short: use `pnpm fetch-sheet:sample` for local work, make sure `pnpm lint`, `pnpm type-check`, and `pnpm build` pass, and never commit secrets, real PNRs / booking numbers, or personal data.
+Issues and PRs are welcome. See the issue templates and PR checklist under [`.github/`](.github/). In short: use `pnpm fetch-sheet:sample` for local work, make sure `pnpm format:check`, `pnpm lint`, `pnpm type-check`, and `pnpm build` pass, and never commit secrets, real PNRs / booking numbers, or personal data.
 
 ## Contributors
 

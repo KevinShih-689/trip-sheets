@@ -53,10 +53,17 @@ export default function RootLayout({ children }: { children: ReactNode }): React
     dayNum: String(Number(d.date.slice(8))),
     area: d.mainArea,
   }));
-  const totalYen = data.days.reduce((sum, d) => sum + dayCostSum(d.items.map((i) => i.estimatedCostJpy)), 0);
+  const totalYen = data.days.reduce(
+    (sum, d) => sum + dayCostSum(d.items.map((i) => i.estimatedCostJpy)),
+    0,
+  );
 
   return (
-    <html lang="zh-Hant" className={`${notoSans.variable} ${plexMono.variable} ${pressStart.variable}`} suppressHydrationWarning>
+    <html
+      lang="zh-Hant"
+      className={`${notoSans.variable} ${plexMono.variable} ${pressStart.variable}`}
+      suppressHydrationWarning
+    >
       <body>
         <Providers>
           <Splash splashWorld={data.meta.splashWorld} />

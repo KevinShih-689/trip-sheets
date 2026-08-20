@@ -16,8 +16,18 @@ import { SheetSchemaError } from './sheet-error';
 export const DATE_TAB_RE = /^(\d{1,2})\.(\d{1,2}) \(([一二三四五六日])\)$/;
 
 const MONTH_ABBR = [
-  'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
-  'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC',
+  'JAN',
+  'FEB',
+  'MAR',
+  'APR',
+  'MAY',
+  'JUN',
+  'JUL',
+  'AUG',
+  'SEP',
+  'OCT',
+  'NOV',
+  'DEC',
 ] as const;
 
 export interface DateTab {
@@ -85,9 +95,7 @@ export function resolveDateTabs(
   }
 
   if (parsed.length === 0) {
-    throw new SheetSchemaError(
-      '找不到任何日期 tab(格式須為 `M.D (週幾)`,例如 `12.14 (一)`)。',
-    );
+    throw new SheetSchemaError('找不到任何日期 tab(格式須為 `M.D (週幾)`,例如 `12.14 (一)`)。');
   }
 
   const refYear = referenceDate.getFullYear();

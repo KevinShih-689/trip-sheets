@@ -10,11 +10,7 @@
  * output shape simply has no such field.
  */
 import { BACKLOG_LAYOUT } from './constants';
-import {
-  CATEGORIES,
-  RESERVATION_STATUSES,
-  tripDataSchema,
-} from './schema';
+import { CATEGORIES, RESERVATION_STATUSES, tripDataSchema } from './schema';
 import { SheetSchemaError } from './sheet-error';
 import { buildEyebrow, buildSplashWorld } from './sheet-tabs';
 import type {
@@ -46,23 +42,63 @@ export const DAY_HEADERS = [
 ] as const;
 
 export const FLIGHT_HEADERS = [
-  '方向', '日期', '航空公司', '航班編號', '出發機場', '出發時間',
-  '抵達機場', '抵達時間', '航廈', '訂位代號 (PNR)', '票價 (TWD)', '行李額度', '備註',
+  '方向',
+  '日期',
+  '航空公司',
+  '航班編號',
+  '出發機場',
+  '出發時間',
+  '抵達機場',
+  '抵達時間',
+  '航廈',
+  '訂位代號 (PNR)',
+  '票價 (TWD)',
+  '行李額度',
+  '備註',
 ] as const;
 
 export const ROOM_HEADERS = [
-  '住宿名稱', '區域', '入住日', '退房日', '晚數', '房型 / 人數', '總價',
-  '訂房平台', '訂單編號', '付款狀態', '免費取消期限', '地址 / 連結', '備註',
+  '住宿名稱',
+  '區域',
+  '入住日',
+  '退房日',
+  '晚數',
+  '房型 / 人數',
+  '總價',
+  '訂房平台',
+  '訂單編號',
+  '付款狀態',
+  '免費取消期限',
+  '地址 / 連結',
+  '備註',
 ] as const;
 
 export const USJ_HEADERS = [
-  '項目', '使用日期', '票種 / 名稱', '張數', '單價', '總價',
-  '購買平台', '購買狀態', '取票 / 入場方式', '備註',
+  '項目',
+  '使用日期',
+  '票種 / 名稱',
+  '張數',
+  '單價',
+  '總價',
+  '購買平台',
+  '購買狀態',
+  '取票 / 入場方式',
+  '備註',
 ] as const;
 
 export const BNB_HEADERS = [
-  '名稱', '區域 / 最近車站', '距車站步行', '房型 / 可住人數', '每晚價格',
-  '總價 (估)', '評分', '優點', '缺點', '連結', '狀態', '備註',
+  '名稱',
+  '區域 / 最近車站',
+  '距車站步行',
+  '房型 / 可住人數',
+  '每晚價格',
+  '總價 (估)',
+  '評分',
+  '優點',
+  '缺點',
+  '連結',
+  '狀態',
+  '備註',
 ] as const;
 
 export function cell(row: Row | undefined, index: number): string {
@@ -142,7 +178,11 @@ export function parseDayTab(isoDate: string, tab: string, rows: readonly Row[]):
   };
 }
 
-export function sliceTable(rows: readonly Row[], dataStart: number, dataEndMax: number): readonly Row[] {
+export function sliceTable(
+  rows: readonly Row[],
+  dataStart: number,
+  dataEndMax: number,
+): readonly Row[] {
   // 列號 1-indexed → array 0-indexed;讀到整列空白或下一表格邊界為止(spec §3.1.2)
   const out: Row[] = [];
   for (let r = dataStart - 1; r < Math.min(dataEndMax, rows.length); r += 1) {
@@ -224,7 +264,12 @@ export function parseBnb(row: Row): BnbCandidate {
 /** Parse the Backlog tab: assert all four headers, then slice + parse each table. */
 export function parseBacklog(backlogRows: readonly Row[]): TripData['backlog'] {
   const L = BACKLOG_LAYOUT;
-  assertHeaders('Backlog', L.flights.headerRow, backlogRows[L.flights.headerRow - 1], FLIGHT_HEADERS);
+  assertHeaders(
+    'Backlog',
+    L.flights.headerRow,
+    backlogRows[L.flights.headerRow - 1],
+    FLIGHT_HEADERS,
+  );
   assertHeaders('Backlog', L.rooms.headerRow, backlogRows[L.rooms.headerRow - 1], ROOM_HEADERS);
   assertHeaders('Backlog', L.usj.headerRow, backlogRows[L.usj.headerRow - 1], USJ_HEADERS);
   assertHeaders('Backlog', L.bnb.headerRow, backlogRows[L.bnb.headerRow - 1], BNB_HEADERS);

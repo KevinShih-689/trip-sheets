@@ -16,7 +16,9 @@ export function getTripData(): TripData {
   if (cached) return cached;
   const path = existsSync(DATA_PATH) ? DATA_PATH : SAMPLE_PATH;
   if (path === SAMPLE_PATH) {
-    console.warn('[trip-data] data/trip-data.json 不存在,使用 sample 資料(pnpm fetch-sheet 產生正式資料)');
+    console.warn(
+      '[trip-data] data/trip-data.json 不存在,使用 sample 資料(pnpm fetch-sheet 產生正式資料)',
+    );
   }
   const raw: unknown = JSON.parse(readFileSync(path, 'utf-8'));
   cached = tripDataSchema.parse(raw);
