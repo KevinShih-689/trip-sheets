@@ -19,6 +19,8 @@ data/stores.json
 
 # secrets:任何 service account key 不得進版控
 *service-account*.json
+# CI 的 Workload Identity 憑證設定檔(google-github-actions/auth 產生於 workspace 根目錄)
+gha-creds-*.json
 *sa-key*.json
 .env
 .env.*
