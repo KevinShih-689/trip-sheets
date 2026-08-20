@@ -263,11 +263,29 @@ On the **Workload Identity Pools** page, open the `github` pool → **Grant acce
 
 ### F4 — Note the provider resource name
 
-Expand the pool in the list to read the provider's full resource name, or assemble it:
+The pools list shows only display name, ID and status — not the resource name. Two ways
+to get it:
+
+- **Console**: open the provider (pencil icon) and read the **Default audience** shown
+  under Audiences. Drop the leading `https://iam.googleapis.com/`; what remains, starting
+  at `projects/`, is the resource name.
+- **CLI**, which prints it directly:
+  ```bash
+  gcloud iam workload-identity-pools providers describe trip-sheets \
+    --project="<PROJECT_ID>" --location="global" \
+    --workload-identity-pool="github" --format="value(name)"
+  ```
+
+Either way it is fully determined by values you already have:
 
 ```
 projects/<PROJECT_NUMBER>/locations/global/workloadIdentityPools/github/providers/trip-sheets
 ```
+
+The same command is worth running with `--format="yaml(attributeCondition,attributeMapping)"`
+to confirm the condition actually saved — the mapping and the condition are easy to mix
+up in the wizard, and a mapping that hardcodes the repository name silently disables the
+protection instead of failing.
 
 ### F5 — Add two GitHub Actions secrets
 
