@@ -928,18 +928,18 @@ a:hover {
   max-width: min(90vw, 380px);
   pointer-events: none;
 }
+/* 外觀交給 .lg(與切換鈕、Avatar 同一套 liquid glass);這裡只負責版面與文字。
+   底色、邊框、陰影都不要在這裡指定,否則會蓋掉 .lg —— 兩者同為單一 class,
+   後定義的 .toast 會勝出。 */
 .toast {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 9px 8px 9px 14px;
-  border-radius: 10px;
-  background: var(--surface2);
-  border: 1px solid var(--line);
+  border-radius: 999px;
   color: var(--text);
   font-size: 12.5px;
   line-height: 1.4;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
   pointer-events: auto;
 }
 .toast-text {
@@ -961,19 +961,40 @@ a:hover {
 .toast-close:hover {
   color: var(--text);
 }
+/* 進出都走動畫。退場靠 .exiting —— toast 會多留 EXIT_MS 才真正從 DOM 移除,
+   時間必須與 useToasts 的 EXIT_MS 一致,否則會看到跳一下才消失。 */
 @media (prefers-reduced-motion: no-preference) {
   .toast {
-    animation: toast-in 200ms ease-out both;
+    animation: toast-in 220ms cubic-bezier(0.34, 1.24, 0.5, 1) both;
+  }
+  .toast.exiting {
+    animation: toast-out 220ms ease-in both;
+  }
+}
+/* 關掉動畫時仍要讓退場中的那則淡出,否則它會在原地停 220ms 才憑空消失 */
+@media (prefers-reduced-motion: reduce) {
+  .toast.exiting {
+    opacity: 0;
   }
 }
 @keyframes toast-in {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(10px) scale(0.96);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes toast-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(6px) scale(0.96);
   }
 }
 

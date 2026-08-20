@@ -1,10 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { dismissToast, pushToast, type Toast } from '@/lib/toast';
+import { markExiting, pushToast, removeToast, type Toast } from '@/lib/toast';
 
 /** 自動關閉時間(ms)。短到不擋路,長到讀得完一行條件敘述。 */
 const TOAST_MS = 3000;
+
+/** 退場動畫長度(ms),需與 globals.css 的 toast-out 一致 */
+const EXIT_MS = 220;
 
 export interface UseToasts {
   readonly toasts: readonly Toast[];
@@ -13,62 +16,69 @@ export interface UseToasts {
 }
 
 /**
- * Toast 佇列 + 每則各自的自動關閉計時器。
+ * Toast 佇列 + 計時器。
  *
- * 計時器以 id 為 key 存在 ref 裡,因為每則的倒數是獨立的 —— 手動關閉第二則
- * 不該影響第一則的剩餘時間。unmount 時全部清掉,避免對已卸載的元件 setState。
+ * 退場一律兩段:先標記 `exiting`,再由下方的 effect 排定真正的移除。三條退場
+ * 路徑(自動逾時、手動關閉、超過上限被擠掉)因此走同一段程式,動畫行為一致,
+ * 也不必在 setState 的 updater 裡做副作用。
  */
 export function useToasts(): UseToasts {
   const [toasts, setToasts] = useState<readonly Toast[]>([]);
   const timers = useRef(new Map<number, ReturnType<typeof setTimeout>>());
+  const removals = useRef(new Map<number, ReturnType<typeof setTimeout>>());
   const nextId = useRef(0);
 
-  const clearTimer = useCallback((id: number): void => {
+  const beginExit = useCallback((id: number): void => {
     const timer = timers.current.get(id);
-    if (timer === undefined) return;
-    clearTimeout(timer);
-    timers.current.delete(id);
+    if (timer !== undefined) {
+      clearTimeout(timer);
+      timers.current.delete(id);
+    }
+    setToasts((current) => markExiting(current, id));
   }, []);
-
-  const dismiss = useCallback(
-    (id: number): void => {
-      clearTimer(id);
-      setToasts((current) => dismissToast(current, id));
-    },
-    [clearTimer],
-  );
 
   const show = useCallback(
     (message: string): void => {
       nextId.current += 1;
       const id = nextId.current;
-      // 被上限擠掉的那則,它的計時器也要一起收掉
-      setToasts((current) => {
-        const next = pushToast(current, { id, message });
-        current.forEach((t) => {
-          if (!next.some((n) => n.id === t.id)) clearTimer(t.id);
-        });
-        return next;
-      });
+      setToasts((current) => pushToast(current, { id, message, exiting: false }).list);
       timers.current.set(
         id,
         setTimeout(() => {
-          dismiss(id);
+          beginExit(id);
         }, TOAST_MS),
       );
+      // 被上限擠掉的那則已由 pushToast 標記為 exiting,移除交給下方 effect
     },
-    [clearTimer, dismiss],
+    [beginExit],
   );
+
+  // 任何進入退場的 toast,動畫播完就真正移除
+  useEffect(() => {
+    toasts.forEach((toast) => {
+      if (!toast.exiting || removals.current.has(toast.id)) return;
+      removals.current.set(
+        toast.id,
+        setTimeout(() => {
+          removals.current.delete(toast.id);
+          setToasts((current) => removeToast(current, toast.id));
+        }, EXIT_MS),
+      );
+    });
+  }, [toasts]);
 
   useEffect(() => {
     const pending = timers.current;
+    const pendingRemovals = removals.current;
     return () => {
-      pending.forEach((timer) => {
-        clearTimeout(timer);
+      [pending, pendingRemovals].forEach((map) => {
+        map.forEach((timer) => {
+          clearTimeout(timer);
+        });
+        map.clear();
       });
-      pending.clear();
     };
   }, []);
 
-  return { toasts, show, dismiss };
+  return { toasts, show, dismiss: beginExit };
 }

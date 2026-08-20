@@ -595,8 +595,10 @@ describe('搜尋條件提示 toast', () => {
       await user.click(screen.getByRole('button', { name: /目前位置模式/ }));
     }
 
-    const stack = screen.getByRole('status');
-    expect(within(stack).getAllByRole('button')).toHaveLength(3);
+    // 被擠掉的那則會先播退場動畫才離開 DOM,所以斷言的是安定後的狀態
+    await waitFor(() => {
+      expect(within(screen.getByRole('status')).getAllByRole('button')).toHaveLength(3);
+    });
   });
 
   it('相同條件連按不去重,兩次操作出現兩則', async () => {
@@ -625,6 +627,23 @@ describe('搜尋條件提示 toast', () => {
     expect(within(stack).getAllByRole('button')).toHaveLength(2);
 
     await user.click(within(stack).getAllByRole('button')[0] as HTMLElement);
-    expect(within(screen.getByRole('status')).getAllByRole('button')).toHaveLength(1);
+
+    await waitFor(() => {
+      expect(within(screen.getByRole('status')).getAllByRole('button')).toHaveLength(1);
+    });
+  });
+
+  it('關閉中的那則不再接受點擊,避免排出第二個移除', async () => {
+    const user = userEvent.setup();
+    stubGeoSuccess();
+    renderDay();
+    await user.click(screen.getByRole('tab', { name: '推薦' }));
+    await settle();
+
+    await user.click(screen.getByRole('button', { name: /目前位置模式:關閉/ }));
+    const close = within(screen.getByRole('status')).getAllByRole('button')[0] as HTMLButtonElement;
+    await user.click(close);
+
+    expect(close.disabled).toBe(true);
   });
 });
