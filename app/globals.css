@@ -622,8 +622,7 @@ a:hover {
 /* ══════════ 推薦 Tab(spec §4)══════════ */
 
 /* ── Liquid glass(spec §4.7)──
-   基底是所有瀏覽器都吃的 CSS 毛玻璃;Chromium 另外套 SVG 折射濾鏡。
-   iOS Safari 不支援 backdrop-filter: url(),會停在基底版本(已知限制)。 */
+   基底是所有瀏覽器都吃的 CSS 毛玻璃;Chromium 另外套 SVG 折射濾鏡。 */
 .lg-defs {
   position: absolute;
   width: 0;
@@ -633,14 +632,19 @@ a:hover {
 .lg {
   background: rgba(235, 240, 255, 0.07);
   border: 1px solid rgba(235, 240, 255, 0.16);
-  backdrop-filter: blur(14px) saturate(1.6);
   -webkit-backdrop-filter: blur(14px) saturate(1.6);
+  backdrop-filter: blur(14px) saturate(1.6);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.22),
     inset 0 -1px 0 rgba(0, 0, 0, 0.22),
     0 8px 26px rgba(0, 0, 0, 0.38);
 }
-@supports (backdrop-filter: url('#lg-refract')) {
+/* SVG 折射只有 Chromium 畫得出來,但不能單靠 @supports 判斷:WebKit 解析得過
+   (回 true),實際卻不 render(webkit.org/b/245510)—— 一旦套進去,整個
+   backdrop-filter 變成 no-op,連基底毛玻璃都一起消失,iOS 上就成了不透明色塊。
+   CSS Paint API(Houdini)目前只有 Chromium 有,拿它當引擎閘門把 WebKit 擋在門外,
+   讓它確實停在上面的基底版本。 */
+@supports (background: paint(lg)) and (backdrop-filter: url('#lg-refract')) {
   .lg {
     backdrop-filter: url('#lg-refract') blur(11px) saturate(1.7);
   }
@@ -657,8 +661,13 @@ a:hover {
 /* ── 底部控制列:切換鈕 + 類型 Avatar ── */
 .day-controls {
   position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
+  /* 用 auto margin 置中而非 translateX(-50%):transform 會讓 WebKit 把祖先當成
+     backdrop root,底下的 .lg 就只能取樣到這層(全透明)的內容,毛玻璃等於沒作用。
+     見 .toast-stack 的同一處理。 */
+  left: 0;
+  right: 0;
+  width: max-content;
+  margin-inline: auto;
   bottom: calc(var(--tabbar-h) + 14px + env(safe-area-inset-bottom));
   display: flex;
   align-items: center;
@@ -917,8 +926,11 @@ a:hover {
    讓最新的一則落在最底下 —— 它永遠出現在同一個位置,舊的被往上推然後消失。 */
 .toast-stack {
   position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
+  /* 置中同樣不能用 transform,否則 toast 的 .lg 在 WebKit 上會失去毛玻璃
+     (見 .day-controls) */
+  left: 0;
+  right: 0;
+  margin-inline: auto;
   bottom: calc(var(--tabbar-h) + 78px + env(safe-area-inset-bottom));
   z-index: 95;
   display: flex;
@@ -999,9 +1011,10 @@ a:hover {
 }
 
 @media (min-width: 1024px) {
-  /* 控制列扣掉左側導覽欄寬度才會置中於內容區 */
+  /* 控制列扣掉左側導覽欄寬度才會置中於內容區:左邊界內縮 216px 後,
+     auto margin 的置中點就落在 50% + 108px */
   .day-controls {
-    left: calc(50% + 108px);
+    left: 216px;
     bottom: 24px;
   }
 
@@ -1037,7 +1050,7 @@ a:hover {
     left: auto;
     right: 28px;
     bottom: 24px;
-    transform: none;
+    margin-inline: 0;
     align-items: flex-end;
   }
 }
