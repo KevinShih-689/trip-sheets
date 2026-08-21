@@ -8,9 +8,12 @@ import { LiquidGlassDefs } from './LiquidGlassDefs';
 import { LocationToggle } from './LocationToggle';
 import { SuggestionsPanel } from './SuggestionsPanel';
 import { Tag } from './Tag';
+import { Toasts } from './Toasts';
 import { TypeAvatarSelector } from './TypeAvatarSelector';
-import { useSuggestions } from './useSuggestions';
+import { GEO_FAILURE_NOTICE, useSuggestions } from './useSuggestions';
 import { shortDate } from '@/lib/format';
+import { STORE_TYPE_LABELS } from '@/lib/store-types';
+import { useToasts } from './useToasts';
 import type { LatLng, Store, TripDay } from '@/lib/types';
 
 const WEEKDAY_EN: Record<string, string> = {
@@ -44,13 +47,28 @@ export function DayView({
 }): React.JSX.Element {
   const [tab, setTab] = useState<DayTab>('itinerary');
   const suggestions = useSuggestions(stores, areaCenter);
-  const { reset: resetSuggestions } = suggestions;
+  const { reset: resetSuggestions, lastSearch, type, searchMode, radiusKm } = suggestions;
+  const toasts = useToasts();
+  const { show: showToast } = toasts;
 
   // 靜態 export 的 HTML 不含 query,初始值只能在掛載後從 URL 補讀(避免 hydration 不一致)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('tab') === TAB_QUERY_VALUE) setTab('suggestions');
   }, []);
+
+  // 搜尋條件變更後告知目前的類型與範圍。措辭在這一層組,因為只有這裡拿得到
+  // 當日區域名;hook 只回報「被什麼觸發」。
+  useEffect(() => {
+    if (lastSearch.reason === 'enter') return; // 進入 Tab 不是使用者改的,不提示
+    if (lastSearch.reason === 'geo-error') {
+      showToast(GEO_FAILURE_NOTICE);
+      return;
+    }
+    const where = searchMode ? '目前位置' : day.mainArea || '當日區域';
+    showToast(`${STORE_TYPE_LABELS[type]} · ${where} ${radiusKm}km 內`);
+    // token 是唯一的觸發依據:同樣的條件連按兩次也該出現兩則
+  }, [lastSearch.token]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const changeTab = useCallback(
     (next: DayTab): void => {
@@ -116,11 +134,7 @@ export function DayView({
         <ItineraryPanel day={day} />
       )}
 
-      {suggestions.notice !== null && onSuggestions && (
-        <div className="sugg-notice" role="status">
-          {suggestions.notice}
-        </div>
-      )}
+      {onSuggestions && <Toasts toasts={toasts.toasts} onDismiss={toasts.dismiss} />}
 
       <div className="day-controls">
         <DayTabSwitcher tab={tab} onChange={changeTab} />

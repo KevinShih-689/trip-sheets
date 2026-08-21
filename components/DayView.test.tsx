@@ -515,3 +515,135 @@ describe('行程定錨(spec §4.6)', () => {
     expectAnchoredTo('難波 日本');
   });
 });
+
+describe('搜尋條件提示 toast', () => {
+  function stubGeoSuccess(): void {
+    vi.stubGlobal('navigator', {
+      ...window.navigator,
+      geolocation: {
+        getCurrentPosition: ((onSuccess: PositionCallback) => {
+          onSuccess({ coords: { latitude: 34.6669, longitude: 135.5016 } } as GeolocationPosition);
+        }) as Geolocation['getCurrentPosition'],
+      },
+      onLine: true,
+    });
+  }
+
+  it('進入推薦 Tab 不提示 —— 使用者沒有改變任何條件', async () => {
+    const user = userEvent.setup();
+    renderDay();
+    await user.click(screen.getByRole('tab', { name: '推薦' }));
+    await settle();
+
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+
+  it('切換類型後提示新的類型與範圍', async () => {
+    const user = userEvent.setup();
+    renderDay([store(), store({ name: '咖啡店', types: ['cafe'], mapsUri: 'https://x/2' })]);
+    await user.click(screen.getByRole('tab', { name: '推薦' }));
+    await settle();
+
+    await user.click(screen.getByRole('button', { name: /店家類型:餐廳/ }));
+    await user.click(screen.getByRole('menuitem', { name: '咖啡甜點' }));
+
+    expect(await screen.findByText('咖啡甜點 · 難波 5km 內')).toBeTruthy();
+  });
+
+  it('開啟目前位置模式後提示改以裝置位置、半徑收窄', async () => {
+    const user = userEvent.setup();
+    stubGeoSuccess();
+    renderDay();
+    await user.click(screen.getByRole('tab', { name: '推薦' }));
+    await settle();
+
+    await user.click(screen.getByRole('button', { name: /目前位置模式:關閉/ }));
+
+    expect(await screen.findByText('餐廳 · 目前位置 3km 內')).toBeTruthy();
+  });
+
+  it('定位失敗只出現一則 —— 不再補一則「已改用區域中心」', async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal('navigator', {
+      ...window.navigator,
+      geolocation: {
+        getCurrentPosition: ((_ok: PositionCallback, onError?: PositionErrorCallback) => {
+          onError?.({ code: 1, message: 'denied' } as GeolocationPositionError);
+        }) as Geolocation['getCurrentPosition'],
+      },
+      onLine: true,
+    });
+    renderDay();
+    await user.click(screen.getByRole('tab', { name: '推薦' }));
+    await settle();
+
+    await user.click(screen.getByRole('button', { name: /目前位置模式:關閉/ }));
+
+    expect(await screen.findByText(GEO_FAILURE_NOTICE)).toBeTruthy();
+    expect(within(screen.getByRole('status')).getAllByRole('button')).toHaveLength(1);
+  });
+
+  it('最多同時三則,第四則把最舊的擠掉', async () => {
+    const user = userEvent.setup();
+    stubGeoSuccess();
+    renderDay();
+    await user.click(screen.getByRole('tab', { name: '推薦' }));
+    await settle();
+
+    // 每次切換位置模式都產生一則,連按四次
+    for (let i = 0; i < 4; i += 1) {
+      await user.click(screen.getByRole('button', { name: /目前位置模式/ }));
+    }
+
+    // 被擠掉的那則會先播退場動畫才離開 DOM,所以斷言的是安定後的狀態
+    await waitFor(() => {
+      expect(within(screen.getByRole('status')).getAllByRole('button')).toHaveLength(3);
+    });
+  });
+
+  it('相同條件連按不去重,兩次操作出現兩則', async () => {
+    const user = userEvent.setup();
+    stubGeoSuccess();
+    renderDay();
+    await user.click(screen.getByRole('tab', { name: '推薦' }));
+    await settle();
+
+    await user.click(screen.getByRole('button', { name: /目前位置模式:關閉/ }));
+    await user.click(screen.getByRole('button', { name: /目前位置模式:開啟/ }));
+
+    expect(within(screen.getByRole('status')).getAllByRole('button')).toHaveLength(2);
+  });
+
+  it('點關閉鈕只移除該則,其餘留著', async () => {
+    const user = userEvent.setup();
+    stubGeoSuccess();
+    renderDay();
+    await user.click(screen.getByRole('tab', { name: '推薦' }));
+    await settle();
+
+    await user.click(screen.getByRole('button', { name: /目前位置模式:關閉/ }));
+    await user.click(screen.getByRole('button', { name: /目前位置模式:開啟/ }));
+    const stack = screen.getByRole('status');
+    expect(within(stack).getAllByRole('button')).toHaveLength(2);
+
+    await user.click(within(stack).getAllByRole('button')[0] as HTMLElement);
+
+    await waitFor(() => {
+      expect(within(screen.getByRole('status')).getAllByRole('button')).toHaveLength(1);
+    });
+  });
+
+  it('關閉中的那則不再接受點擊,避免排出第二個移除', async () => {
+    const user = userEvent.setup();
+    stubGeoSuccess();
+    renderDay();
+    await user.click(screen.getByRole('tab', { name: '推薦' }));
+    await settle();
+
+    await user.click(screen.getByRole('button', { name: /目前位置模式:關閉/ }));
+    const close = within(screen.getByRole('status')).getAllByRole('button')[0] as HTMLButtonElement;
+    await user.click(close);
+
+    expect(close.disabled).toBe(true);
+  });
+});
