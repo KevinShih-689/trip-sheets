@@ -1,6 +1,8 @@
 # Setup SOP — Google Cloud & API Keys
 
-Detailed, one-time setup for wiring the site to your Google Sheet and Google Maps. Referenced from the project [README](../README.md). Total time: ~20 minutes.
+Detailed, one-time setup for wiring the site to your Google Sheet and Google Maps. Referenced from the project [README](../README.md).
+
+Budget roughly 20 minutes for Parts A–D and F (the site working), plus another 15 for Part E if you want the 推薦 tab — most of that is clicking through quota rows.
 
 You will produce these values, which become GitHub Secrets in the README's "Add GitHub Secrets" step:
 
@@ -221,6 +223,11 @@ A project created through the console starts with none of these. Skipping this s
 produces a `SERVICE_DISABLED` error during the token exchange that does not name the
 missing service.
 
+**All four are free.** They are control-plane APIs — identity, tokens, project metadata —
+and Google does not meter them. Enabling them adds nothing to the bill, and neither does
+the token exchange that happens on every deploy. The only billable services in this whole
+document are the two in Part E.
+
 ### F2 — Create the pool and provider
 
 **IAM & Admin → Workload Identity Federation → Create pool**.
@@ -305,6 +312,17 @@ is no reason to publish the project number and service-account address.
 Actions → **Auth check** → Run workflow, from any branch, `mode: check`. It authenticates,
 reads the sheet, and prints the projected API usage. It never deploys and makes no
 billable call.
+
+Run `check` **before** `full`, and treat them as testing different things:
+
+| Step fails at | What it means |
+| --- | --- |
+| the auth step | Part F — pool, provider, attribute condition, or the impersonation binding |
+| `pnpm fetch-sheet` | Part C — the sheet is not shared with the service-account email |
+| `pnpm fetch-stores` (only in `full`) | Part E3 — the Service Usage Consumer binding, or a daily quota set too low |
+
+Separating them matters because a single red run otherwise leaves you guessing between
+federation and API permissions, which are configured in different parts of the console.
 
 ### CLI equivalent
 
