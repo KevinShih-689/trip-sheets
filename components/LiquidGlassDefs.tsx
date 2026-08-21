@@ -1,8 +1,10 @@
 /**
  * Liquid glass 的 SVG 折射濾鏡定義(spec §4.7)。
  *
- * 只有 Chromium 支援 `backdrop-filter: url(#…)`;Safari(含 iOS)與 Firefox
+ * 只有 Chromium 畫得出 `backdrop-filter: url(#…)`;Safari(含 iOS)與 Firefox
  * 會落到 globals.css 的 CSS 毛玻璃降級版,此 <svg> 對它們無作用但也無害。
+ * WebKit 對這個語法「解析得過但不 render」,所以降級的判斷不能只看 @supports,
+ * 實際閘門在 globals.css 的 `.lg`(webkit.org/b/245510)。
  * 整份文件只需要一份,由 DayView 掛載。
  */
 export function LiquidGlassDefs(): React.JSX.Element {
