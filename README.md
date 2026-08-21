@@ -75,19 +75,22 @@ Edit your trip in a spreadsheet (from your phone or laptop), push a button, and 
 - **Offline (PWA)** — service worker precaches every page and asset so the whole site works in airplane mode on the road.
 - **Sensitive-field filtering** — PNR and booking reference numbers are dropped at the fetch layer and never enter the static output; CI greps the build to enforce it.
 - **Schema-drift protection** — header rows are compared column-by-column on every fetch; a renamed/moved column fails the build instead of silently mis-mapping data.
-- **Zero manual file shuffling** — change the sheet, trigger a rebuild from the GitHub mobile app (or wait for the daily cron), and the site reflects it in ~3 minutes.
+- **Store suggestions (推薦)** — a saved Google Maps list is resolved to coordinates at build time, then filtered in the browser by type and distance (Haversine, no runtime API call). Search from the day's area or from your current location.
+- **Keyless CI** — GitHub Actions exchanges its own OIDC identity for a short-lived Google token via Workload Identity Federation. No service-account key exists to leak or rotate.
+- **Zero manual file shuffling** — change the sheet, trigger a rebuild from the GitHub mobile app (or wait for the weekly cron), and the site reflects it in ~3 minutes.
 
 ## Tech Stack
 
-| Layer      | Choice                                           |
-| ---------- | ------------------------------------------------ |
-| Framework  | Next.js 15 (App Router, `output: 'export'`)      |
-| Language   | TypeScript 5.7 (strict), no `any`                |
-| UI         | Chakra UI v3 + Emotion 11                        |
-| Data fetch | `googleapis` 144 (Sheets API, read-only) + Zod 3 |
-| Testing    | Vitest 3 (data-boundary unit tests)              |
-| Runtime    | Node 22 (`.nvmrc`), pnpm 9                       |
-| CI/CD      | GitHub Actions → GitHub Pages                    |
+| Layer      | Choice                                                               |
+| ---------- | -------------------------------------------------------------------- |
+| Framework  | Next.js 15 (App Router, `output: 'export'`)                          |
+| Language   | TypeScript 5.7 (strict), no `any`                                    |
+| UI         | Chakra UI v3 + Emotion 11                                            |
+| Data fetch | `googleapis` 144 (Sheets, read-only) + Places/Geocoding REST + Zod 3 |
+| CI auth    | Workload Identity Federation (no stored key)                         |
+| Testing    | Vitest 3 (data-boundary unit tests)                                  |
+| Runtime    | Node 22 (`.nvmrc`), pnpm 9                                           |
+| CI/CD      | GitHub Actions → GitHub Pages                                        |
 
 > Versions track `package.json` — `engines.node` (`>=22`) is the single source of truth for Node; `.nvmrc` and this table follow it.
 
@@ -95,30 +98,39 @@ Edit your trip in a spreadsheet (from your phone or laptop), push a button, and 
 
 ```
 trip-sheets/
-├── .github/
-│   ├── workflows/
-│   │   ├── ci.yml                 # PR gate: lint → type-check → test → build → guard (no secrets)
-│   │   └── deploy.yml             # fetch → lint → type-check → test → build → guard → deploy
-│   ├── ISSUE_TEMPLATE/            # bug / feature templates
-│   └── PULL_REQUEST_TEMPLATE.md
+├── .github/workflows/
+│   ├── ci.yml                     # PR gate: format → lint → type-check → test → build → guard (no secrets)
+│   ├── deploy.yml                 # auth → fetch → preflight → lookup → checks → build → guard → deploy
+│   └── auth-check.yml             # manual-only: proves federation works; never deploys
 ├── app/                           # App Router pages
 │   ├── layout.tsx                 # tab bar / sidebar, PWA meta
 │   ├── page.tsx                   # overview: map + day list, auto-focus today
-│   ├── day/[date]/page.tsx        # per-day timeline (generateStaticParams ×6)
+│   ├── day/[date]/page.tsx        # per-day shell (generateStaticParams)
 │   └── backlog/page.tsx           # flights / rooms / USJ / bnb (filtered)
-├── components/                    # AppNav, ItineraryCard, MapEmbed, Splash, ...
-├── lib/
-│   ├── types.ts                   # types (zod z.infer)
-│   ├── schema.ts                  # zod schemas
-│   ├── parse-sheet.ts             # the single data boundary (pure: parse + validate + filter)
-│   ├── parse-sheet.test.ts        # Vitest unit tests for the data boundary
-│   ├── theme.ts                   # Chakra custom theme
-│   ├── constants.ts               # sheet-structure constants (Backlog tab, layout, weekdays)
-│   └── trip-data.ts               # getTripData()
-├── scripts/fetch-sheet.ts         # IO + CLI wrapper around lib/parse-sheet.ts
+├── components/
+│   ├── DayView.tsx                # day shell: tab state + suggestion search state
+│   ├── ItineraryPanel.tsx         # 行程 tab: list + rail + anchored map
+│   ├── SuggestionsPanel.tsx       # 推薦 tab: store list + anchored map
+│   ├── useSuggestions.ts          # search state machine (type × radius × centre)
+│   ├── useToasts.ts / Toasts.tsx  # search-condition feedback
+│   ├── AnchoredMap.tsx            # the one map component both tabs share
+│   └── ...                        # AppNav, Splash, TypeAvatarSelector, icons, ...
+├── lib/                           # pure + unit-tested; no IO, no React
+│   ├── parse-sheet.ts             # itinerary data boundary (parse + validate + filter)
+│   ├── parse-stores.ts            # 店家清單 boundary + build-time call planning
+│   ├── suggestions.ts             # type + radius filter, distance sort
+│   ├── haversine.ts               # great-circle distance
+│   ├── store-types.ts             # Google `types` → the five avatar categories
+│   ├── geocode.ts                 # Geocoding v4 URL + response parsing
+│   ├── map-anchor.ts              # anchor/base-anchor → Embed iframe src
+│   ├── toast.ts                   # toast queue rules (cap, eviction, exit)
+│   └── schema.ts / types.ts       # zod schemas and their inferred types
+├── scripts/
+│   ├── fetch-sheet.ts             # IO wrapper → data/trip-data.json
+│   └── fetch-stores.ts            # IO wrapper → data/stores.json (+ --dry-run preflight)
 ├── data/
-│   ├── trip-data.json             # generated by CI (gitignored)
-│   └── trip-data.sample.json      # committed sample for local dev
+│   ├── *.json                     # generated by CI (gitignored)
+│   └── *.sample.json              # committed samples for local dev
 ├── public/                        # manifest.json, sw.js, icons
 └── next.config.ts
 ```
@@ -147,13 +159,16 @@ Import [`doc/sheet.xlsx`](doc/sheet.xlsx) into Google Sheets (Google Drive → N
 
 Follow the detailed step-by-step guide in **[`doc/setup-sop.md`](doc/setup-sop.md)**. It covers, with exact console navigation:
 
-- Creating the GCP project and enabling the **Google Sheets API** and **Maps Embed API**
-- Creating a **service account** (no GCP roles) and JSON key
-- Sharing the spreadsheet with the service account as **Viewer**
-- Collecting `SHEET_ID` / `NEXT_PUBLIC_SHEETS_URL`
-- Creating and **restricting** the `NEXT_PUBLIC_GMAPS_EMBED_KEY` (HTTP-referrer + API restriction)
+| Part | What it sets up                                                                                            |
+| ---- | ---------------------------------------------------------------------------------------------------------- |
+| A–C  | Project, **Google Sheets API**, a service account **with no key**, and sharing the sheet with it as Viewer |
+| D    | The public `NEXT_PUBLIC_GMAPS_EMBED_KEY`, restricted by HTTP referrer and to the Embed API only            |
+| E    | **Only for the 推薦 tab** — enabling Places API (New) + Geocoding, daily quota caps, and a budget alert    |
+| F    | **Workload Identity Federation** — the pool, provider, attribute condition, and impersonation binding      |
 
-The SOP ends by producing the four values you'll paste as GitHub Secrets in step 3.
+The SOP ends by producing the five values you'll paste as GitHub Secrets in step 3.
+
+> Part F is the part to read carefully. Its attribute condition (`assertion.repository == 'OWNER/REPO'`) is the entire security boundary — without it, any repository on GitHub can mint a token for your service account.
 
 ### 3. Fork this repo & add GitHub Secrets
 
@@ -188,7 +203,7 @@ Push to `main`, or run the **Deploy to GitHub Pages** workflow manually (`workfl
 
 ### 6. Keep the 推薦 tab in sync (only if you use it)
 
-Store suggestions come from a Google Maps saved list, which **has no API** — so refreshing them is a manual export ([ADR-0001](docs/adr/0001-store-suggestions-from-takeout-plus-places-enrichment.md)). Whenever you add places to the list:
+Store suggestions come from a Google Maps saved list, which **has no API** — so refreshing them is a manual export. Whenever you add places to the list:
 
 1. [Google Takeout](https://takeout.google.com) → **Deselect all** → tick only **Saved** (bookmark icon; _not_ "Maps" or "Maps (your places)").
 2. Unzip and open `Takeout/Saved/<list name>.csv`.
@@ -218,8 +233,6 @@ pnpm install
 pnpm fetch-sheet:sample     # copies data/trip-data.sample.json → data/trip-data.json
 pnpm fetch-stores:sample    # copies data/stores.sample.json → data/stores.json
 pnpm dev
-
-pnpm dev
 ```
 
 Sample data is the only local path: there are no credentials on your machine to
@@ -236,6 +249,7 @@ Open http://localhost:3000.
 | `pnpm fetch-sheet`         | Enumerate date tabs + Backlog, validate, filter, write `trip-data.json` |
 | `pnpm fetch-sheet:sample`  | Use the committed sample data instead of a live sheet                   |
 | `pnpm fetch-stores`        | Resolve the 店家清單 tab via Places API, write `stores.json`            |
+| `pnpm fetch-stores:check`  | Preflight — report how many billable calls a real run would make        |
 | `pnpm fetch-stores:sample` | Use the committed sample store data instead of a live lookup            |
 | `pnpm dev`                 | Start the Next.js dev server                                            |
 | `pnpm build`               | Static export to `out/`                                                 |
@@ -251,52 +265,81 @@ Open http://localhost:3000.
 
 ## How the Build Pipeline Works
 
-`.github/workflows/deploy.yml` runs on `workflow_dispatch`, a daily cron (`0 21 * * *` UTC = 05:00 Taiwan), and pushes to `main`. Any step failure aborts the deploy — a stale-but-correct site is preferred over a broken one.
+`.github/workflows/deploy.yml` runs on `workflow_dispatch`, a weekly cron (`0 21 * * 0` UTC = Monday 05:00 Taiwan), and pushes to `main`. Any step failure aborts the deploy — a stale-but-correct site is preferred over a broken one.
+
+The schedule is only a fallback; the normal path is a manual dispatch from the GitHub mobile app after editing the sheet. It is weekly rather than daily because that is also what bounds the store-lookup API usage.
 
 ```mermaid
 sequenceDiagram
     actor Dev as You / cron / push
     participant GA as GitHub Actions
-    participant GS as Google Sheets API
+    participant WIF as GitHub OIDC + GCP STS
+    participant GS as Sheets API
+    participant Cache as Lookup cache
+    participant Maps as Places + Geocoding
     participant Pages as GitHub Pages
 
-    Dev->>GA: Trigger (dispatch / schedule / push main)
+    Dev->>GA: Trigger (dispatch / weekly cron / push main)
     GA->>GA: checkout + pnpm install --frozen-lockfile
-    GA->>GS: pnpm fetch-sheet (get title + tabs, then batchGet)
-    GS-->>GA: raw rows
+
+    GA->>WIF: exchange OIDC identity for a token
+    Note over WIF: attribute condition rejects<br/>any other repository
+    WIF-->>GA: access token (~1h, no stored key)
+
+    GA->>GS: pnpm fetch-sheet
+    GS-->>GA: raw rows (free API)
     GA->>GA: verify headers + zod parse + drop sensitive fields
     Note over GA: write data/trip-data.json<br/>(fetch failure → abort, no deploy)
-    GA->>GA: pnpm format:check && pnpm lint && pnpm type-check && pnpm test
+
+    Cache-->>GA: restore .cache (actions/cache)
+    GA->>GA: pnpm fetch-stores:check — count planned billable calls
+    Note over GA: over MAX_PLACE_CALLS → abort<br/>before spending anything
+    GA->>Maps: pnpm fetch-stores — only rows the cache is missing
+    Maps-->>GA: name / address / coordinates / types
+    GA->>Cache: save immediately, so a later failure cannot discard it
+
+    GA->>GA: format:check && lint && type-check && test
     GA->>GA: pnpm build → out/
     GA->>GA: sensitive-field guard (grep PNR / 訂位代號 / 訂單編號)
     Note over GA: match found → fail job, no deploy
     GA->>Pages: upload-pages-artifact + deploy-pages
-    Pages-->>Dev: Site live at https://<user>.github.io/<repo>/
+    Pages-->>Dev: Site live at https://&lt;user&gt;.github.io/&lt;repo&gt;/
 ```
+
+Two steps exist purely to keep the billable half honest:
+
+- **Preflight** (`fetch-stores:check`) reads the sheet and the cache and reports, in the job summary, how many Places/Geocoding calls the real run intends to make. Over the cap, it aborts — and because it calls no billable API itself, aborting there costs nothing.
+- **Saving the cache runs right after the lookup**, not at the end of the job. `actions/cache` saves in a post step, and post steps are skipped when a job fails — so a later lint failure would otherwise throw away lookups that had already been paid for.
+
+**Auth check** (`auth-check.yml`) is the manual counterpart: it runs the same auth and fetch steps but never deploys, so federation and API permissions can be verified from a branch before anything reaches `main`. `mode: check` makes no billable call at all.
 
 `concurrency: { group: pages, cancel-in-progress: true }` means rapid re-triggers only run the latest.
 
 ## Security Notes
 
 - The Pages site is **public**, so PNRs and booking reference numbers are removed at the fetch layer — the parser's return types simply don't include those fields, and CI verifies the built output. Look them up in the sheet when needed.
-- Service account has **Viewer** access to a single sheet — least privilege, no GCP roles.
-- The Maps Embed API key is a public value by design; restrict it by **HTTP referrer** to your Pages domain.
+- **No long-lived Google credential exists.** CI federates GitHub's OIDC identity for a ~1h token, and GCP accepts that exchange only from this repository. There is no key in Secrets, on a laptop, or in the repo — nothing to rotate, nothing to leak.
+- The service account has **Viewer** on one spreadsheet, plus **Service Usage Consumer** on the project if you use the 推薦 tab — the minimum needed to spend that project's API quota, and nothing else.
+- The Maps Embed API key is a public value by design; restrict it by **HTTP referrer** to your Pages domain. It is the only key in the whole setup.
+- Cost is bounded independently of auth: per-API **daily quota caps** are the one control that actually blocks requests. Budget alerts only send email — see [`doc/setup-sop.md`](doc/setup-sop.md) Part E.
+- `ci.yml` runs on pull requests **without any secrets**, using the committed sample data, so a fork PR can never reach your Google project.
 
 ## Known Limitations
 
-- **Not real-time** — changes require a rebuild (manual dispatch or the daily cron). This is the deliberate trade-off for architectural simplicity.
+- **Not real-time** — changes require a rebuild (manual dispatch, or the weekly cron as a fallback). This is the deliberate trade-off for architectural simplicity.
 - **Map needs network** — the embedded map won't render offline (a striped placeholder is shown); all other content works offline.
-- **Reuse** — swap `SHEET_ID` and the repo name; rename the spreadsheet and set its date tabs. No code edit needed for a new trip; the schema stays the same.
+- **Store lookups need manual refresh** — a Google Maps saved list has no API, so adding places means re-exporting from Takeout (step 6). Takeout also omits addresses, so a store with a generic name may fail to resolve; the build log names those rows.
+- **Reuse** — swap `SHEET_ID` and the repo name; rename the spreadsheet and set its date tabs. The Workload Identity condition is repository-scoped, so a fork needs its own Part F. No code edit needed for a new trip; the schema stays the same.
 
 ## Documentation
 
-- **[`doc/setup-sop.md`](doc/setup-sop.md)** — step-by-step Google Cloud & API-key setup (referenced by step 2 above).
+- **[`doc/setup-sop.md`](doc/setup-sop.md)** — step-by-step Google Cloud setup: project, service account, Embed key, billable-API cost controls, and Workload Identity Federation (referenced by step 2 above).
 - **[`doc/sheet.xlsx`](doc/sheet.xlsx)** — the blank spreadsheet template to import into Google Sheets.
-- **`data/trip-data.sample.json`** — a committed sample dataset used for local dev and CI (no Google Cloud needed).
+- **`data/trip-data.sample.json`** / **`data/stores.sample.json`** — committed sample datasets used for local dev and CI (no Google Cloud needed).
 
 ## Contributing
 
-Issues and PRs are welcome. See the issue templates and PR checklist under [`.github/`](.github/). In short: use `pnpm fetch-sheet:sample` for local work, make sure `pnpm format:check`, `pnpm lint`, `pnpm type-check`, and `pnpm build` pass, and never commit secrets, real PNRs / booking numbers, or personal data.
+Issues and PRs are welcome. See the issue templates and PR checklist under [`.github/`](.github/). In short: use the `:sample` scripts for local work (there are no credentials on a dev machine by design), make sure `pnpm format:check`, `pnpm lint`, `pnpm type-check`, `pnpm test`, and `pnpm build` pass, and never commit secrets, real PNRs / booking numbers, or personal data.
 
 ## Contributors
 
