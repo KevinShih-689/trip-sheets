@@ -15,3 +15,11 @@ if (typeof window !== 'undefined' && typeof window.matchMedia !== 'function') {
       dispatchEvent: () => false,
     }) as MediaQueryList;
 }
+
+/**
+ * jsdom 也沒有實作 scrollIntoView;AppNav 會用它把當日 tab 捲進可視範圍。
+ * 補一個 no-op 讓組件測試跑得動,行為本身由瀏覽器負責、不在單元測試範圍。
+ */
+if (typeof window !== 'undefined' && typeof Element.prototype.scrollIntoView !== 'function') {
+  Element.prototype.scrollIntoView = (): void => undefined;
+}

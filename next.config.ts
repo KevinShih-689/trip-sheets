@@ -12,6 +12,14 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_BASE_PATH: basePath,
   },
+  experimental: {
+    // Chakra v3 re-exports its whole component surface (and Zag.js under it) from
+    // one barrel. Next's default optimizePackageImports list does not cover it, so a
+    // Server Component importing `@chakra-ui/react` drags the entire barrel across
+    // the RSC boundary into that route's client chunk. Rewriting barrel imports to
+    // direct module paths keeps each route to the components it actually uses.
+    optimizePackageImports: ['@chakra-ui/react'],
+  },
 };
 
 export default nextConfig;
