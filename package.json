@@ -44,7 +44,7 @@
     "fetch-stores:check": "tsx scripts/fetch-stores.ts --dry-run",
     "fetch-stores:sample": "node -e \"require('fs').copyFileSync('data/stores.sample.json','data/stores.json');console.log('sample data -> data/stores.json')\"",
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build && tsx scripts/gen-sw-precache.ts",
     "lint": "next lint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
