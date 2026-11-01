@@ -13,6 +13,8 @@ import {
   parseDayTab,
   parseFlight,
   parseRoom,
+  sectionOwner,
+  splitDirection,
   findHeaderRow,
   readTableRows,
   type Row,
@@ -135,6 +137,32 @@ describe('parseDayTab — row termination', () => {
   });
 });
 
+describe('splitDirection / sectionOwner — traveler attribution', () => {
+  it('splits a traveler in full- or half-width parentheses off the direction', () => {
+    expect(splitDirection('去程（施）')).toEqual({ direction: '去程', traveler: '施' });
+    expect(splitDirection('回程 (施)')).toEqual({ direction: '回程', traveler: '施' });
+    expect(splitDirection('回程(施）')).toEqual({ direction: '回程', traveler: '施' });
+  });
+
+  it('returns a null traveler when the direction has no parentheses', () => {
+    expect(splitDirection('去程')).toEqual({ direction: '去程', traveler: null });
+    expect(splitDirection('')).toEqual({ direction: '', traveler: null });
+  });
+
+  it('reads the owner after the dash in a section title', () => {
+    expect(sectionOwner(['✈️ 機票資訊 - 高'])).toBe('高');
+    expect(sectionOwner(['✈️ 機票資訊-高 '])).toBe('高');
+    expect(sectionOwner(['✈️ 機票資訊'])).toBe('');
+    expect(sectionOwner(undefined)).toBe('');
+  });
+
+  it('parseFlight uses the parenthesised traveler, else the default', () => {
+    expect(parseFlight(['去程（施）'], '高')).toMatchObject({ direction: '去程', traveler: '施' });
+    expect(parseFlight(['去程'], '高')).toMatchObject({ direction: '去程', traveler: '高' });
+    expect(parseFlight(['去程'])).toMatchObject({ traveler: '' });
+  });
+});
+
 describe('sensitive-field filtering (spec §3.2)', () => {
   it('parseFlight drops the PNR column (index 9) entirely', () => {
     // index:      0     1            2       3        4       5       6       7       8    9(PNR)    10     11    12
@@ -248,7 +276,7 @@ describe('parseBacklog + buildTripData integration', () => {
   /** Live sheet layout (2026-11-02): every table has a title row right above its header. */
   function liveBacklogRows(): Row[] {
     return [
-      ['✈️ 機票資訊 - 罕'],
+      ['✈️ 機票資訊 - 高'],
       [...FLIGHT_HEADERS],
       ['去程', '2026/12/14', 'EVA', 'BR178'],
       ['回程', '2026/12/20', 'EVA', 'BR131'],
@@ -277,11 +305,11 @@ describe('parseBacklog + buildTripData integration', () => {
 
   it('locates tables by header on the live layout and never reads a title row as data', () => {
     const backlog = parseBacklog(liveBacklogRows());
-    expect(backlog.flights.map((f) => f.direction)).toEqual([
-      '去程',
-      '回程',
-      '去程（施）',
-      '回程（施）',
+    expect(backlog.flights.map((f) => [f.direction, f.traveler])).toEqual([
+      ['去程', '高'],
+      ['回程', '高'],
+      ['去程', '施'],
+      ['回程', '施'],
     ]);
     expect(backlog.rooms).toHaveLength(3);
     expect(backlog.usj.map((u) => u.item)).toEqual([

@@ -619,6 +619,71 @@ a:hover {
   }
 }
 
+/* 行前(手持裝置):機票、住宿改為橫向滑動,一次露出一張半提示可往右滑 */
+@media (max-width: 1023.98px) {
+  .swipe-row {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 16px;
+    padding: 0 16px;
+    scrollbar-width: none;
+  }
+  .swipe-row::-webkit-scrollbar {
+    display: none;
+  }
+  /* 尾端留白:部分 Safari 版本會忽略捲動容器的 padding-right */
+  .swipe-row::after {
+    content: '';
+    flex: 0 0 4px;
+  }
+  .swipe-item {
+    display: flex;
+    flex: 0 0 min(66%, 320px);
+    scroll-snap-align: start;
+  }
+  /* 卡片本身的左右 margin 是給直排用的,橫排時由 gap 負責間距;等高對齊 */
+  .swipe-row > .swipe-item > * {
+    flex: 1;
+    min-width: 0;
+    margin-inline: 0;
+  }
+  .swipe-row:focus-visible {
+    outline: 2px solid var(--yellow);
+    outline-offset: -2px;
+  }
+  /* 機票一頁 = 一個方向(上排、下排各一位乘客),寬一點只露出下一頁的邊 */
+  .swipe-item--page {
+    flex-basis: min(86%, 360px);
+  }
+  /* 需比 Chakra 單一 class 的 mx 權重高,才蓋得掉卡片直排用的左右外距 */
+  .swipe-row .flight-page > * {
+    margin-inline: 0;
+  }
+}
+
+/* 機票分頁:每頁內乘客上下排列 */
+.flight-page {
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 1024px) {
+  /* 桌機:各方向的頁面左右並排 */
+  .flight-pages {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    padding: 0 16px;
+    gap: 0 12px;
+  }
+  .flight-pages .flight-page > * {
+    margin-inline: 0;
+  }
+}
+
 /* ══════════ 推薦 Tab(spec §4)══════════ */
 
 /* ── Liquid glass(spec §4.7)──

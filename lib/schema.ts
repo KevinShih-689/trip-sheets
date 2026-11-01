@@ -37,6 +37,8 @@ export const tripDaySchema = z.object({
 // 注意:Flight 無 PNR、Room 無訂單編號 — 敏感欄位於 fetch 層即丟棄(spec §3.2)
 export const flightSchema = z.object({
   direction: z.string(),
+  /** Who flies it: from 「去程（施）」, else the flights section title owner. Optional for older JSON. */
+  traveler: z.string().default(''),
   date: z.string(),
   airline: z.string(),
   flightNo: z.string(),

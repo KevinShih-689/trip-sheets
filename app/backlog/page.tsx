@@ -1,10 +1,20 @@
 import { Box, Flex } from '@chakra-ui/react';
-import { BnbCard, BoardingPass, HotelCard, TicketRow } from '@/components/backlog-cards';
+import { BnbCard, HotelCard, TicketRow } from '@/components/backlog-cards';
 import { EmptyState } from '@/components/EmptyState';
+import { FlightPages, TravelerLegend } from '@/components/FlightPages';
 import { QBlock } from '@/components/QBlock';
+import { SwipeRow } from '@/components/SwipeRow';
+import { groupFlights } from '@/lib/flight-groups';
 import { getTripData } from '@/lib/trip-data';
 
-function SectionTitle({ zh, en }: { zh: string; en: string }): React.JSX.Element {
+interface SectionTitleProps {
+  zh: string;
+  en: string;
+  /** Right-aligned extra content, e.g. the traveler colour legend. */
+  aside?: React.ReactNode;
+}
+
+function SectionTitle({ zh, en, aside }: SectionTitleProps): React.JSX.Element {
   return (
     <Flex className="sec-title" px="20px" pt="20px" pb="8px" align="baseline" gap="10px">
       <Box fontSize="13px" fontWeight="700" letterSpacing="0.06em">
@@ -13,6 +23,7 @@ function SectionTitle({ zh, en }: { zh: string; en: string }): React.JSX.Element
       <Box fontFamily="pixel" fontSize="7px" color="pixel.faint">
         {en}
       </Box>
+      {aside}
     </Flex>
   );
 }
@@ -46,6 +57,7 @@ function SectionEmpty({ text }: { text: string }): React.JSX.Element {
 
 export default function BacklogPage(): React.JSX.Element {
   const { backlog } = getTripData();
+  const flightLayout = groupFlights(backlog.flights);
   const allEmpty =
     backlog.flights.length === 0 &&
     backlog.rooms.length === 0 &&
@@ -80,9 +92,13 @@ export default function BacklogPage(): React.JSX.Element {
       {header}
       <div className="bl-grid">
         <section className="bl-flights">
-          <SectionTitle zh="機票" en="BOARDING" />
+          <SectionTitle
+            zh="機票"
+            en="BOARDING"
+            aside={<TravelerLegend travelers={flightLayout.travelers} />}
+          />
           {backlog.flights.length > 0 ? (
-            backlog.flights.map((f) => <BoardingPass key={`${f.flightNo}-${f.date}`} flight={f} />)
+            <FlightPages layout={flightLayout} />
           ) : (
             <SectionEmpty text="尚未填入機票資訊" />
           )}
@@ -91,11 +107,13 @@ export default function BacklogPage(): React.JSX.Element {
         <section className="bl-stay">
           <SectionTitle zh="住宿" en="STAY" />
           {backlog.rooms.length > 0 ? (
-            <div className="cards-h">
+            <SwipeRow label="住宿" className="cards-h">
               {backlog.rooms.map((r) => (
-                <HotelCard key={`${r.name}-${r.checkIn}`} room={r} />
+                <div className="swipe-item" key={`${r.name}-${r.checkIn}`}>
+                  <HotelCard room={r} />
+                </div>
               ))}
-            </div>
+            </SwipeRow>
           ) : (
             <SectionEmpty text="尚未填入已訂住宿" />
           )}
