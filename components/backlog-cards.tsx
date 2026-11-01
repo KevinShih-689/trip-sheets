@@ -1,10 +1,25 @@
 import { Box, Flex } from '@chakra-ui/react';
 import { Tag, statusVariant } from './Tag';
 import { formatYen } from '@/lib/format';
+import type { FlightTone } from '@/lib/flight-groups';
 import type { BnbCandidate, Flight, Room, UsjTicket } from '@/lib/types';
 
-/** 登機證卡(定稿:紅色帶 + 虛線撕線 + 條碼) */
-export function BoardingPass({ flight }: { flight: Flight }): React.JSX.Element {
+/** Header band colour per traveler (band tint + matching light text). */
+export const TONE_STYLES: Record<FlightTone, { band: string; text: string; mark: string }> = {
+  red: { band: 'rgba(229,37,33,0.26)', text: '#F5B8B0', mark: '#F2635F' },
+  blue: { band: 'rgba(4,156,216,0.26)', text: '#A9DDF2', mark: '#4FC0EC' },
+  green: { band: 'rgba(67,176,71,0.26)', text: '#BCE6BE', mark: '#6FCE73' },
+  yellow: { band: 'rgba(251,208,0,0.2)', text: '#F7E7A0', mark: '#FBD000' },
+};
+
+interface BoardingPassProps {
+  flight: Flight;
+  tone?: FlightTone;
+}
+
+/** 登機證卡(定稿:色帶 + 虛線撕線 + 條碼;色帶顏色依乘客區分) */
+export function BoardingPass({ flight, tone = 'red' }: BoardingPassProps): React.JSX.Element {
+  const toneStyle = TONE_STYLES[tone];
   return (
     <Box
       position="relative"
@@ -21,12 +36,12 @@ export function BoardingPass({ flight }: { flight: Flight }): React.JSX.Element 
         align="center"
         px="16px"
         py="10px"
-        style={{ background: 'rgba(229,37,33,0.26)' }}
+        style={{ background: toneStyle.band }}
       >
         <Box fontFamily="mono" fontSize="13px" fontWeight="600">
           {flight.airline} · {flight.flightNo}
         </Box>
-        <Box fontFamily="mono" fontSize="11px" style={{ color: '#F5B8B0' }}>
+        <Box fontFamily="mono" fontSize="11px" style={{ color: toneStyle.text }}>
           {flight.direction} · {flight.date}
         </Box>
       </Flex>

@@ -230,10 +230,27 @@ export function findHeaderRow(
   );
 }
 
+/** 「去程（施）」 / 「回程 (施)」 → direction + traveler; full/half-width parens mixed. */
+const DIRECTION_TRAVELER_RE = /^(.*?)\s*[(（]([^()（）]+)[)）]$/;
+
+export function splitDirection(value: string): { direction: string; traveler: string | null } {
+  const m = DIRECTION_TRAVELER_RE.exec(value.trim());
+  if (!m) return { direction: value.trim(), traveler: null };
+  return { direction: (m[1] ?? '').trim(), traveler: (m[2] ?? '').trim() };
+}
+
+/** Owner written after the dash in a section title, e.g. 「✈️ 機票資訊 - 高」 → 「高」. */
+export function sectionOwner(titleRow: Row | undefined): string {
+  const m = /-\s*([^-]+?)\s*$/.exec(cell(titleRow, 0));
+  return m?.[1] ?? '';
+}
+
 // 敏感欄位過濾(spec §3.2):PNR(index 9)刻意不映射,回傳型別中不存在對應欄位。
-export function parseFlight(row: Row): Flight {
+export function parseFlight(row: Row, defaultTraveler = ''): Flight {
+  const { direction, traveler } = splitDirection(cell(row, 0));
   return {
-    direction: cell(row, 0),
+    direction,
+    traveler: traveler ?? defaultTraveler,
     date: cell(row, 1),
     airline: cell(row, 2),
     flightNo: cell(row, 3),
@@ -314,7 +331,9 @@ export function parseBacklog(backlogRows: readonly Row[]): TripData['backlog'] {
   const usjAt = findHeaderRow(BACKLOG_TAB, rows, USJ_HEADERS, roomsAt + 1);
   const bnbAt = findHeaderRow(BACKLOG_TAB, rows, BNB_HEADERS, usjAt + 1);
   return {
-    flights: readTableRows(rows, flightsAt + 1, roomsAt - 1).map(parseFlight),
+    flights: readTableRows(rows, flightsAt + 1, roomsAt - 1).map((row) =>
+      parseFlight(row, sectionOwner(rows[flightsAt - 1])),
+    ),
     rooms: readTableRows(rows, roomsAt + 1, usjAt - 1).map(parseRoom),
     usj: readTableRows(rows, usjAt + 1, bnbAt - 1).map(parseUsj),
     bnbCandidates: readTableRows(rows, bnbAt + 1, rows.length).map(parseBnb),
