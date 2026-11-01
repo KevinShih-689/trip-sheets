@@ -26,14 +26,10 @@ export function TravelerLegend({
               as="span"
               w="12px"
               h="12px"
-              borderWidth="1.5px"
+              flexShrink={0}
               borderRadius="2px"
               aria-hidden="true"
-              style={{
-                borderColor: mark,
-                background: `linear-gradient(45deg, transparent 45%, ${mark} 45% 55%, transparent 55%), linear-gradient(-45deg, transparent 45%, ${mark} 45% 55%, transparent 55%)`,
-                opacity: 0.9,
-              }}
+              style={{ background: mark }}
             />
             {travelerName(t)}
           </Flex>
