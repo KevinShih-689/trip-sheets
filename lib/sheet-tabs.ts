@@ -12,8 +12,13 @@
 import { ZH_WEEKDAYS } from './constants';
 import { SheetSchemaError } from './sheet-error';
 
-/** Date-tab naming rule: `M.D (週幾)`. Detection only — not a generator. */
-export const DATE_TAB_RE = /^(\d{1,2})\.(\d{1,2}) \(([一二三四五六日])\)$/;
+/**
+ * Date-tab naming rule: `M.D (週幾)`. Detection only — not a generator.
+ * Tab names are hand-typed with a Chinese IME, so full-width parentheses (mixed
+ * with half-width ones) and a missing space are tolerated; the weekday is still
+ * required because year inference depends on it.
+ */
+export const DATE_TAB_RE = /^(\d{1,2})\.(\d{1,2}) ?[(（]([一二三四五六日])[)）]$/;
 
 const MONTH_ABBR = [
   'JAN',

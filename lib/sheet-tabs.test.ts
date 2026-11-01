@@ -11,11 +11,19 @@ describe('parseDateTabName', () => {
     expect(parseDateTabName('3.5 (四)')).toEqual({ month: 3, day: 5, weekdayZh: '四' });
   });
 
+  it('accepts full-width parentheses and an optional space (hand-typed tab names)', () => {
+    const expected = { month: 12, day: 17, weekdayZh: '四' };
+    expect(parseDateTabName('12.17 (四）')).toEqual(expected); // mixed widths
+    expect(parseDateTabName('12.17（四）')).toEqual(expected); // full-width, no space
+    expect(parseDateTabName('12.17 （四）')).toEqual(expected);
+    expect(parseDateTabName('12.17(四)')).toEqual(expected); // half-width, no space
+  });
+
   it('returns null for non-date tabs and malformed names', () => {
     expect(parseDateTabName('Backlog')).toBeNull();
     expect(parseDateTabName('Config')).toBeNull();
-    expect(parseDateTabName('12.14(一)')).toBeNull(); // 缺空格
     expect(parseDateTabName('12.14 (月)')).toBeNull(); // 非合法星期字
+    expect(parseDateTabName('12.14 (抵達日)')).toBeNull(); // 括號內非星期
     expect(parseDateTabName('12.14')).toBeNull(); // 缺星期
     expect(parseDateTabName('')).toBeNull();
   });
