@@ -13,7 +13,8 @@ import {
   parseDayTab,
   parseFlight,
   parseRoom,
-  sliceTable,
+  findHeaderRow,
+  readTableRows,
   type Row,
 } from './parse-sheet';
 
@@ -69,7 +70,7 @@ describe('assertHeaders — schema-drift guard (spec §3.1.3)', () => {
 });
 
 describe('parseDayTab — row termination', () => {
-  it('reads rows until the first blank name (spec §3.1.1)', () => {
+  it('skips rows with a blank name and keeps reading the rows after them', () => {
     const rows = dayRowsWith([
       [
         '10:00',
@@ -83,14 +84,27 @@ describe('parseDayTab — row termination', () => {
         'https://x',
         '',
       ],
-      ['12:00', '餐廳', '', '', '', '', '', '', '', ''], // empty name → stop
-      ['13:00', '景點', '通天閣', '', '', '', '', '', '', ''], // must NOT be read
+      ['12:00', '餐廳', '', '', '', '', '', '', '', ''], // empty name → skipped
+      ['13:00', '景點', '通天閣', '', '', '', '', '', '', ''], // still read
     ]);
     const day = parseDayTab('2026-12-14', '12.14 (一)', rows);
-    expect(day.items).toHaveLength(1);
-    expect(day.items[0]?.name).toBe('大阪城');
+    expect(day.items.map((i) => i.name)).toEqual(['大阪城', '通天閣']);
     expect(day.mainArea).toBe('大阪・難波');
     expect(day.accommodation).toBe('Hotel X');
+  });
+
+  it('reads past fully-blank rows left as placeholders (live 12.15 / 12.16 layout)', () => {
+    const rows = dayRowsWith([
+      [],
+      [],
+      ['', '', '退房', '', '', '', '', '', '', ''],
+      [],
+      ['20:30-21:00', '餐廳', 'Ushiram', '', '電車', '', '', '待預約', '', ''],
+      [],
+      ['', '', '', '', '', '當日預估花費小計', '', '', '', ''], // template footer row
+    ]);
+    const day = parseDayTab('2026-12-16', '12.16 (三)', rows);
+    expect(day.items.map((i) => i.name)).toEqual(['退房', 'Ushiram']);
   });
 
   it('normalizes cost and coerces unknown enums to null', () => {
@@ -170,25 +184,53 @@ describe('sensitive-field filtering (spec §3.2)', () => {
   });
 });
 
-describe('sliceTable — Backlog table boundary (spec §3.1.2)', () => {
-  const rows: Row[] = [];
-  // flights data rows 3..4 (index 2..3), then a row that belongs to the next table area
-  rows[2] = ['去程', 'a'];
-  rows[3] = ['回程', 'b'];
-  // rows[4..6] would be beyond dataEndMax (7) boundary anyway
+describe('readTableRows — Backlog table boundary', () => {
+  const rows: Row[] = [['title'], ['header'], ['去程', 'a'], ['回程', 'b'], ['next title']];
 
-  it('stops at dataEndMax and does not cross into the next table', () => {
-    const out = sliceTable(rows, 3, 7); // flights: dataStart 3, dataEndMax 7
-    expect(out).toHaveLength(2);
-    expect(out[0]?.[0]).toBe('去程');
+  it('stops at the exclusive end index and does not cross into the next table', () => {
+    const out = readTableRows(rows, 2, 4);
+    expect(out.map((r) => r[0])).toEqual(['去程', '回程']);
   });
 
   it('stops early on a fully-blank row', () => {
-    const withBlank: Row[] = [...rows];
-    withBlank[4] = [];
-    withBlank[5] = ['stray'];
-    const out = sliceTable(withBlank, 3, 20);
-    expect(out).toHaveLength(2); // blank at index 4 stops it
+    const withBlank: Row[] = [...rows.slice(0, 4), [], ['stray']];
+    expect(readTableRows(withBlank, 2, withBlank.length)).toHaveLength(2);
+  });
+
+  it('clamps an end index past the fetched range', () => {
+    expect(readTableRows(rows, 2, 100)).toHaveLength(3);
+  });
+});
+
+describe('findHeaderRow — locate a table by its header text', () => {
+  const rows: Row[] = [
+    ['✈️ 機票資訊'],
+    [...FLIGHT_HEADERS],
+    ['去程'],
+    ['🏨 房間資訊'],
+    [...ROOM_HEADERS],
+  ];
+
+  it('returns the 0-based index of the first exact header match at or after fromIdx', () => {
+    expect(findHeaderRow('Backlog', rows, FLIGHT_HEADERS, 0)).toBe(1);
+    expect(findHeaderRow('Backlog', rows, ROOM_HEADERS, 2)).toBe(4);
+  });
+
+  it('does not match a header that sits before fromIdx', () => {
+    expect(() => findHeaderRow('Backlog', rows, FLIGHT_HEADERS, 2)).toThrow(SheetSchemaError);
+  });
+
+  it('reports the per-column diff when the first column matches but others drifted', () => {
+    const drifted: string[] = [...ROOM_HEADERS];
+    drifted[8] = '訂單號';
+    const withDrift: Row[] = [...rows.slice(0, 4), drifted];
+    expect(() => findHeaderRow('Backlog', withDrift, ROOM_HEADERS, 2)).toThrow(
+      /第 5 列第 9 欄:預期「訂單編號」,實際「訂單號」/,
+    );
+  });
+
+  it('names the missing table when no row starts with its first header', () => {
+    expect(() => findHeaderRow('Backlog', rows, USJ_HEADERS, 0)).toThrow(/找不到表頭「項目」/);
   });
 });
 
@@ -202,6 +244,67 @@ describe('parseBacklog + buildTripData integration', () => {
     rows[21] = [...BNB_HEADERS]; // row 22
     return rows;
   }
+
+  /** Live sheet layout (2026-11-02): every table has a title row right above its header. */
+  function liveBacklogRows(): Row[] {
+    return [
+      ['✈️ 機票資訊 - 罕'],
+      [...FLIGHT_HEADERS],
+      ['去程', '2026/12/14', 'EVA', 'BR178'],
+      ['回程', '2026/12/20', 'EVA', 'BR131'],
+      ['去程（施）', '2026/12/12', 'CAL', 'CI156'],
+      ['回程（施）', '2026/12/20', 'CAL', 'CI153'],
+      ['🏨 房間資訊 - 施'], // row 7: directly below the 4th flight
+      [...ROOM_HEADERS],
+      ['FDS ZEAL', '', '12/12', '12/14', '2'],
+      ["La'gent Hotel Osaka Bay", '', '12/14', '12/16', '2'],
+      ['KIX Direct', 'KIX Direct', '12/16', '12/20', '4'],
+      [],
+      [],
+      [],
+      ['🎢 環球影城資訊 - 杰'],
+      [...USJ_HEADERS], // row 16 (template: 15)
+      ['門票 (Studio Pass)', '12/15', '一般+快通', '4'],
+      ['快速通關 (Express Pass)', '4'],
+      ['早鳥入場券'],
+      ['App 抽選 / 整理券'],
+      [],
+      ['🏠 民宿口袋名單(候選比較)'],
+      [...BNB_HEADERS], // row 23 (template: 22)
+      ['民宿 A', '難波'],
+    ];
+  }
+
+  it('locates tables by header on the live layout and never reads a title row as data', () => {
+    const backlog = parseBacklog(liveBacklogRows());
+    expect(backlog.flights.map((f) => f.direction)).toEqual([
+      '去程',
+      '回程',
+      '去程（施）',
+      '回程（施）',
+    ]);
+    expect(backlog.rooms).toHaveLength(3);
+    expect(backlog.usj.map((u) => u.item)).toEqual([
+      '門票 (Studio Pass)',
+      '快速通關 (Express Pass)',
+      '早鳥入場券',
+      'App 抽選 / 整理券',
+    ]);
+    expect(backlog.bnbCandidates.map((b) => b.name)).toEqual(['民宿 A']);
+  });
+
+  it('still parses the original template layout (headers on rows 2 / 8 / 15 / 22)', () => {
+    const rows = backlogRows();
+    rows[0] = ['✈️ 機票資訊'];
+    rows[2] = ['去程', '2026/12/14'];
+    rows[6] = ['🏨 房間資訊(已訂住宿)'];
+    rows[13] = ['🎢 環球影城資訊'];
+    rows[15] = ['門票 (Studio Pass)'];
+    rows[20] = ['🏠 民宿口袋名單(候選比較)'];
+    const backlog = parseBacklog(rows);
+    expect(backlog.flights).toHaveLength(1);
+    expect(backlog.usj).toHaveLength(1);
+  });
 
   it('parses an all-empty backlog into empty arrays', () => {
     const backlog = parseBacklog(backlogRows());

@@ -9,7 +9,7 @@
  * reference number (room col 9) are never mapped into the return types — the
  * output shape simply has no such field.
  */
-import { BACKLOG_LAYOUT } from './constants';
+import { BACKLOG_TAB } from './constants';
 import { CATEGORIES, RESERVATION_STATUSES, tripDataSchema } from './schema';
 import { SheetSchemaError } from './sheet-error';
 import { buildEyebrow, buildSplashWorld } from './sheet-tabs';
@@ -149,9 +149,11 @@ export function parseDayTab(isoDate: string, tab: string, rows: readonly Row[]):
   const items: ItineraryItem[] = [];
   for (let r = 7; r < rows.length; r += 1) {
     const row = rows[r];
-    if (isRowEmpty(row)) break;
+    // Name is required. Rows without one (placeholder gaps, the template's cost
+    // subtotal footer) are skipped rather than ending the list, so blank rows
+    // left between entries do not silently drop everything after them.
     const name = cell(row, 2);
-    if (name === '') break; // 名稱為必填,以此判斷資料列結束
+    if (name === '') continue;
     items.push({
       timeSlot: cell(row, 0),
       category: enumOrNull(cell(row, 1), CATEGORIES),
@@ -178,19 +180,54 @@ export function parseDayTab(isoDate: string, tab: string, rows: readonly Row[]):
   };
 }
 
-export function sliceTable(
+/**
+ * Read data rows in [start, endExclusive) (0-based), stopping at the first fully
+ * blank row. `endExclusive` is clamped to the fetched range.
+ */
+export function readTableRows(
   rows: readonly Row[],
-  dataStart: number,
-  dataEndMax: number,
+  start: number,
+  endExclusive: number,
 ): readonly Row[] {
-  // 列號 1-indexed → array 0-indexed;讀到整列空白或下一表格邊界為止(spec §3.1.2)
   const out: Row[] = [];
-  for (let r = dataStart - 1; r < Math.min(dataEndMax, rows.length); r += 1) {
+  for (let r = start; r < Math.min(endExclusive, rows.length); r += 1) {
     const row = rows[r];
     if (isRowEmpty(row)) break;
     out.push([...(row ?? [])]);
   }
   return out;
+}
+
+function headersMatch(row: Row | undefined, headers: readonly string[]): boolean {
+  return headers.every((h, i) => cell(row, i) === h);
+}
+
+/**
+ * Locate a table by its header text instead of a fixed row number, so editors
+ * can insert or delete rows in the Backlog tab without breaking the build.
+ * Returns the 0-based index of the first exact match at or after `fromIdx`.
+ *
+ * Header drift still fails loudly: when a row starts with the table's first
+ * header but other columns differ, `assertHeaders` throws a per-column diff;
+ * when no such row exists at all, a "header not found" error is thrown.
+ */
+export function findHeaderRow(
+  tab: string,
+  rows: readonly Row[],
+  headers: readonly string[],
+  fromIdx: number,
+): number {
+  for (let r = fromIdx; r < rows.length; r += 1) {
+    if (headersMatch(rows[r], headers)) return r;
+  }
+  const firstHeader = headers[0] ?? '';
+  for (let r = fromIdx; r < rows.length; r += 1) {
+    if (cell(rows[r], 0) === firstHeader) assertHeaders(tab, r + 1, rows[r], headers);
+  }
+  throw new SheetSchemaError(
+    `tab「${tab}」第 ${fromIdx + 1} 列之後找不到表頭「${firstHeader}」` +
+      `(預期整列為:${headers.join(' | ')})。`,
+  );
 }
 
 // 敏感欄位過濾(spec §3.2):PNR(index 9)刻意不映射,回傳型別中不存在對應欄位。
@@ -261,23 +298,26 @@ export function parseBnb(row: Row): BnbCandidate {
   };
 }
 
-/** Parse the Backlog tab: assert all four headers, then slice + parse each table. */
+/**
+ * Parse the Backlog tab. The four tables are located by header text, in order
+ * (flights → rooms → USJ → B&B), each search starting below the previous header.
+ *
+ * Layout assumption: every table has a section-title row (e.g. 「🏨 房間資訊」)
+ * directly above its header, so a table's data ends before the row above the
+ * next header. This keeps a fully-filled table from reading the next title as
+ * data. The last table reads until a blank row or the end of the fetched range.
+ */
 export function parseBacklog(backlogRows: readonly Row[]): TripData['backlog'] {
-  const L = BACKLOG_LAYOUT;
-  assertHeaders(
-    'Backlog',
-    L.flights.headerRow,
-    backlogRows[L.flights.headerRow - 1],
-    FLIGHT_HEADERS,
-  );
-  assertHeaders('Backlog', L.rooms.headerRow, backlogRows[L.rooms.headerRow - 1], ROOM_HEADERS);
-  assertHeaders('Backlog', L.usj.headerRow, backlogRows[L.usj.headerRow - 1], USJ_HEADERS);
-  assertHeaders('Backlog', L.bnb.headerRow, backlogRows[L.bnb.headerRow - 1], BNB_HEADERS);
+  const rows = backlogRows;
+  const flightsAt = findHeaderRow(BACKLOG_TAB, rows, FLIGHT_HEADERS, 0);
+  const roomsAt = findHeaderRow(BACKLOG_TAB, rows, ROOM_HEADERS, flightsAt + 1);
+  const usjAt = findHeaderRow(BACKLOG_TAB, rows, USJ_HEADERS, roomsAt + 1);
+  const bnbAt = findHeaderRow(BACKLOG_TAB, rows, BNB_HEADERS, usjAt + 1);
   return {
-    flights: sliceTable(backlogRows, L.flights.dataStart, L.flights.dataEndMax).map(parseFlight),
-    rooms: sliceTable(backlogRows, L.rooms.dataStart, L.rooms.dataEndMax).map(parseRoom),
-    usj: sliceTable(backlogRows, L.usj.dataStart, L.usj.dataEndMax).map(parseUsj),
-    bnbCandidates: sliceTable(backlogRows, L.bnb.dataStart, L.bnb.dataEndMax).map(parseBnb),
+    flights: readTableRows(rows, flightsAt + 1, roomsAt - 1).map(parseFlight),
+    rooms: readTableRows(rows, roomsAt + 1, usjAt - 1).map(parseRoom),
+    usj: readTableRows(rows, usjAt + 1, bnbAt - 1).map(parseUsj),
+    bnbCandidates: readTableRows(rows, bnbAt + 1, rows.length).map(parseBnb),
   };
 }
 

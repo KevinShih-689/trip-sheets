@@ -37,11 +37,3 @@ export const SEARCH_SKELETON_MS = 260;
 export const GEOLOCATION_TIMEOUT_MS = 8000;
 
 export const SHEETS_EDIT_URL_ENV = 'NEXT_PUBLIC_SHEETS_URL';
-
-/** Backlog tab 四個表格的固定列位(1-indexed,見 spec §3.1.2) */
-export const BACKLOG_LAYOUT = {
-  flights: { headerRow: 2, dataStart: 3, dataEndMax: 7 },
-  rooms: { headerRow: 8, dataStart: 9, dataEndMax: 14 },
-  usj: { headerRow: 15, dataStart: 16, dataEndMax: 21 },
-  bnb: { headerRow: 22, dataStart: 23, dataEndMax: 40 },
-} as const;
